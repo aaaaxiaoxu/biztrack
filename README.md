@@ -1,10 +1,12 @@
 # 📋 BizTrack Project
 
+![Istanbul coverage](https://img.shields.io/badge/Istanbul%20coverage-97.43%25-brightgreen)
+
 BizTrack is a web app born from my experience running a small business. It’s a tool designed to simplify managing products, orders, and expenses seamlessly. As a small business owner, I created BizTrack to simplify the complexities of managing products, orders, and expenses. The inspiration for this project came from the challenges I faced in my own business. I wanted to develop a solution that could benefit “myself” and others in a similar situation.
 
 ## 📝 DEMO
 
-Please refer to --- https://sumusa.github.io/biztrack/.
+Please refer to --- https://biztrack-6tl.pages.dev/.
 
 ## 📷 Screenshots
 
@@ -19,6 +21,24 @@ Please refer to --- https://sumusa.github.io/biztrack/.
 - **Search and Sort Entries**: Sort through the product, order and expense tables using the column headers.
 - **Analytics**: Explore sales by product category and track expenses with visually appealing charts
 - **Export to CSV**: Download all data tables into CSV seamlessly.
+- **Internationalization**: Switch the interface between English and Chinese.
+- **Privacy Compliance**: Cookie consent banner and a dedicated privacy policy page.
+- **Safer Exports**: CSV values are escaped to reduce spreadsheet formula injection risk.
+- **Test Coverage**: Core business and security helpers are covered by Vitest/Istanbul.
+
+## ✅ Quality Checks
+
+```bash
+npm install
+npm test
+```
+
+Current Istanbul coverage from `npm test`:
+
+- Statements: 97.43%
+- Branches: 88.88%
+- Functions: 100%
+- Lines: 97.22%
 
 ## 💪🏾 Motivation
 

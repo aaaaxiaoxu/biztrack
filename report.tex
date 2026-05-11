@@ -1,0 +1,130 @@
+\documentclass[12pt]{article}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{helvet}
+\usepackage{courier}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\renewcommand{\familydefault}{\sfdefault}
+\lstset{
+  basicstyle=\footnotesize\ttfamily,
+  breaklines=true,
+  frame=single,
+  columns=fullflexible,
+  showstringspaces=false
+}
+\title{\textbf{CPT304 Coursework 1: Research-Led Software Enhancement}}
+\author{Group XX}
+\date{11 May 2026}
+
+\begin{document}
+\maketitle
+
+\section{App Selection}
+Our group selected BizTrack, an order-management project from the CPT304 project list. It is a small static HTML/CSS/JavaScript app for product, order, and expense tracking, so it was suitable for a research-led enhancement: the business goal is clear, the deployment surface is small, and weaknesses in security, data quality, accessibility, privacy, and testing could be fixed without changing the app's purpose. Our fork is hosted at \url{https://github.com/aaaaxiaoxu/biztrack} and deployed at \url{https://biztrack-6tl.pages.dev/}.
+
+\section{Deficiency 1: DOM XSS Risk}
+\subsection{Detection}
+Manual source audit found that user-controlled product, order, and expense fields were interpolated into \texttt{innerHTML} in \texttt{products.js}, \texttt{orders.js}, and \texttt{finances.js}. Entering markup such as \texttt{<img onerror=alert(1)>} could be parsed as HTML instead of displayed as data.
+\subsection{Literature}
+OWASP explains that output encoding prevents XSS by ensuring untrusted input is treated as data rather than executable browser code \cite{owasp-xss}. The DOM-based guidance also recommends using safe DOM sinks such as text nodes where possible.
+\subsection{Implementation}
+The fix follows OWASP's safe-sink principle: rows are now built with \texttt{createElement()} and values are assigned using \texttt{textContent}. Action icons became real buttons with event listeners, avoiding inline string handlers that mixed data and code.
+\begin{lstlisting}[caption={Before and after: safe table output}]
+// Before
+prodRow.innerHTML = `<td>${product.prodName}</td>`;
+
+// After
+const cell = document.createElement("td");
+cell.textContent = product.prodName;
+prodRow.appendChild(cell);
+\end{lstlisting}
+
+\section{Deficiency 2: CSV Formula Injection}
+\subsection{Detection}
+The export functions joined raw values with commas. If a product name began with \texttt{=}, \texttt{+}, \texttt{-}, or \texttt{@}, Excel or LibreOffice could interpret it as a formula when the CSV was opened.
+\subsection{Literature}
+OWASP defines CSV Injection as embedding untrusted input into exported spreadsheet cells; cells beginning with formula metacharacters may execute spreadsheet functions \cite{owasp-csv}. Recommended mitigation includes quoting fields and prefixing dangerous values.
+\subsection{Implementation}
+A shared \texttt{BizTrackCore.generateCSV()} now escapes quotes, wraps comma/newline fields, and prefixes formula-like values with an apostrophe. All three exports use this single tested helper.
+\begin{lstlisting}[caption={Before and after: CSV export}]
+// Before
+Object.values(row).join(",");
+
+// After
+function escapeCsvValue(value) {
+  const text = String(value ?? "");
+  const safe = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
+  return /[",\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
+}
+\end{lstlisting}
+
+\section{Deficiency 3: Keyboard and Focus Accessibility}
+\subsection{Detection}
+Manual keyboard testing found invisible focus indicators because the global CSS removed outlines. Sortable table headers and icon-only controls relied on pointer clicks and lacked clear keyboard/reader semantics.
+\subsection{Literature}
+WCAG 2.2 requires keyboard operability and visible focus indicators for interactive content \cite{wcag22}. W3C's Focus Visible note explains that removing visible focus harms users who navigate without a mouse \cite{wai-focus}.
+\subsection{Implementation}
+The global outline removal was replaced with \texttt{:focus-visible}. Dynamic edit/delete controls are now \texttt{button} elements with \texttt{aria-label}; sortable headers receive keyboard activation. This turns previously mouse-only actions into accessible controls.
+\begin{lstlisting}[caption={Before and after: actionable controls}]
+// Before
+<i onclick="deleteProduct('PD001')" class="delete-icon"></i>
+
+// After
+deleteButton.type = "button";
+deleteButton.setAttribute("aria-label", `Delete product ${prodID}`);
+deleteButton.addEventListener("click", () => deleteProduct(prodID));
+\end{lstlisting}
+
+\section{Deficiency 4: Fragile Local Data and Numeric Validation}
+\subsection{Detection}
+The app parsed \texttt{localStorage} directly with \texttt{JSON.parse()} and accepted parsed numbers without checking for \texttt{NaN}. A corrupted storage entry could stop page rendering; invalid amounts could poison totals.
+\subsection{Literature}
+MDN describes Web Storage values as strings that must be parsed by application code \cite{mdn-storage}. web.dev also warns that local storage is synchronous and should be handled carefully with clear fallbacks \cite{web-storage}.
+\subsection{Implementation}
+The new core layer wraps storage parsing in \texttt{try/catch}, falls back to default data, validates non-negative numeric fields, and generates transaction IDs from the maximum existing ID rather than array length.
+\begin{lstlisting}[caption={Before and after: resilient storage}]
+// Before
+orders = JSON.parse(localStorage.getItem("bizTrackOrders"));
+
+// After
+orders = core.parseStoredArray(localStorage, "bizTrackOrders", defaultOrders);
+orderTotal = core.calculateOrderTotal(itemPrice, qtyBought, shipping, taxes);
+\end{lstlisting}
+
+\section{Baseline Standards Evidence}
+\begin{figure}[h]
+\centering\fbox{\parbox{0.82\linewidth}{Insert Cloudflare/Vercel uptime screenshot showing 7+ green days.}}
+\caption{Production deployment uptime evidence for BizTrack.}
+\end{figure}
+\begin{figure}[h]
+\centering\fbox{\parbox{0.82\linewidth}{Insert README badge or CI/Codecov screenshot. Local Istanbul output: statements 97.43\%, branches 88.88\%, functions 100\%, lines 97.22\%.}}
+\caption{Test coverage evidence from Vitest/Istanbul.}
+\end{figure}
+\begin{figure}[h]
+\centering\fbox{\parbox{0.82\linewidth}{Insert Lighthouse Accessibility screenshot showing 90+ after focus, labels, and semantic-control fixes.}}
+\caption{Lighthouse accessibility evidence.}
+\end{figure}
+\begin{figure}[h]
+\centering\fbox{\parbox{0.82\linewidth}{Insert screenshot of the EN/Chinese language toggle.}}
+\caption{Internationalization toggle evidence.}
+\end{figure}
+\begin{figure}[h]
+\centering\fbox{\parbox{0.82\linewidth}{Insert screenshot of cookie banner and Privacy Policy page.}}
+\caption{Cookie consent and privacy compliance evidence.}
+\end{figure}
+
+\section{Individual Contribution Forms}
+Attach the completed peer-assessment spreadsheet for all four members. Add direct pull-request links for each member here before submission.
+
+\section{References}
+\begin{thebibliography}{9}
+\bibitem{owasp-xss} OWASP Foundation, ``Cross Site Scripting Prevention Cheat Sheet,'' OWASP Cheat Sheet Series. [Online]. Available: \url{https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html}
+\bibitem{owasp-csv} OWASP Foundation, ``CSV Injection,'' OWASP. [Online]. Available: \url{https://owasp.org/www-community/attacks/CSV_Injection}
+\bibitem{wcag22} W3C, ``Web Content Accessibility Guidelines (WCAG) 2.2,'' W3C Recommendation. [Online]. Available: \url{https://www.w3.org/TR/WCAG22/}
+\bibitem{wai-focus} W3C WAI, ``Understanding Success Criterion 2.4.7: Focus Visible.'' [Online]. Available: \url{https://www.w3.org/WAI/WCAG21/Understanding/focus-visible}
+\bibitem{mdn-storage} MDN Web Docs, ``Using the Web Storage API.'' [Online]. Available: \url{https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API}
+\bibitem{web-storage} web.dev, ``Storage for the web.'' [Online]. Available: \url{https://web.dev/storage-for-the-web/}
+\end{thebibliography}
+\end{document}

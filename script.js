@@ -11,7 +11,8 @@ function closeSidebar() {
 
 
 window.onload = function () {
-  const expenses = JSON.parse(localStorage.getItem('bizTrackTransactions')) || [
+  const core = window.BizTrackCore;
+  const defaultExpenses = [
     {
       trID: 1,
       trDate: "2024-01-05",
@@ -48,7 +49,7 @@ window.onload = function () {
       trNotes: "Pizza"
   },
   ];
-  const revenues = JSON.parse(localStorage.getItem('bizTrackOrders')) || [
+  const defaultRevenues = [
     {
       orderID: "1001",
       orderDate: "2024-01-05",
@@ -105,6 +106,8 @@ window.onload = function () {
       orderStatus: "Pending"
   },
   ];
+  const expenses = core.parseStoredArray(localStorage, 'bizTrackTransactions', defaultExpenses);
+  const revenues = core.parseStoredArray(localStorage, 'bizTrackOrders', defaultRevenues);
 
   const totalExpenses = calculateExpTotal(expenses);
   const totalRevenues = calculateRevTotal(revenues);
@@ -116,32 +119,29 @@ window.onload = function () {
   const balDiv = document.getElementById('balance');
   const ordDiv = document.getElementById('num-orders');
 
-  revDiv.innerHTML = `
-      <span class="title">Revenue</span>
-      <span class="amount-value">$${totalRevenues.toFixed(2)}</span> 
-  `;
-
-  expDiv.innerHTML = `
-    <span class="title">Expenses</span>
-    <span class="amount-value">$${totalExpenses.toFixed(2)}</span>
-  `;
-
-  balDiv.innerHTML = `
-    <span class="title">Balance</span>
-    <span class="amount-value">$${totalBalance.toFixed(2)}</span>
-  `;
-
-  ordDiv.innerHTML = `
-    <span class="title">Orders</span>
-    <span class="amount-value">${numOrders}</span>
-  `;
+  renderMetric(revDiv, "Revenue", `$${totalRevenues.toFixed(2)}`);
+  renderMetric(expDiv, "Expenses", `$${totalExpenses.toFixed(2)}`);
+  renderMetric(balDiv, "Balance", `$${totalBalance.toFixed(2)}`);
+  renderMetric(ordDiv, "Orders", numOrders);
 };
 
 function calculateExpTotal(transactions) {
-  return transactions.reduce((total, transaction) => total + transaction.trAmount, 0);
+  return window.BizTrackCore.sumBy(transactions, "trAmount");
 }
 function calculateRevTotal(orders) {
-  return orders.reduce((total, order) => total + order.orderTotal, 0);
+  return window.BizTrackCore.sumBy(orders, "orderTotal");
+}
+
+function renderMetric(container, title, value) {
+  container.replaceChildren();
+  const titleSpan = document.createElement("span");
+  titleSpan.className = "title";
+  titleSpan.dataset.i18nOriginal = title;
+  titleSpan.textContent = (window.BizTrackI18n?.translate || ((text) => text))(title);
+  const valueSpan = document.createElement("span");
+  valueSpan.className = "amount-value";
+  valueSpan.textContent = value;
+  container.append(titleSpan, valueSpan);
 }
 
 

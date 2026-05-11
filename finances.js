@@ -21,54 +21,49 @@ function closeForm() {
 
 let transactions = [];
 let serialNumberCounter;
+const core = window.BizTrackCore;
+const defaultTransactions = [
+    {
+        trID: 1,
+        trDate: "2024-01-05",
+        trCategory: "Rent",
+        trAmount: 100.00,
+        trNotes: "January Rent"
+    },
+    {
+        trID: 2,
+        trDate: "2024-01-15",
+        trCategory: "Order Fulfillment",
+        trAmount: 35.00,
+        trNotes: "Order #1005"
+    },
+    {
+        trID: 3,
+        trDate: "2024-01-08",
+        trCategory: "Utilities",
+        trAmount: 120.00,
+        trNotes: "Internet"
+    },
+    {
+        trID: 4,
+        trDate: "2024-02-05",
+        trCategory: "Supplies",
+        trAmount: 180.00,
+        trNotes: "Embroidery Machine"
+    },
+    {
+        trID: 5,
+        trDate: "2024-01-25",
+        trCategory: "Miscellaneous",
+        trAmount: 20.00,
+        trNotes: "Pizza"
+    },
+];
 
 window.onload = function () {
-    const storedTransactions = localStorage.getItem("bizTrackTransactions");
-    if (storedTransactions) {
-        transactions = JSON.parse(storedTransactions);
-    } else {
-        transactions = [
-            {
-                trID: 1,
-                trDate: "2024-01-05",
-                trCategory: "Rent",
-                trAmount: 100.00,
-                trNotes: "January Rent"
-            },
-            {
-                trID: 2,
-                trDate: "2024-01-15",
-                trCategory: "Order Fulfillment",
-                trAmount: 35.00,
-                trNotes: "Order #1005"
-            },
-            {
-                trID: 3,
-                trDate: "2024-01-08",
-                trCategory: "Utilities",
-                trAmount: 120.00,
-                trNotes: "Internet"
-            },
-            {
-                trID: 4,
-                trDate: "2024-02-05",
-                trCategory: "Supplies",
-                trAmount: 180.00,
-                trNotes: "Embroidery Machine"
-            },
-            {
-                trID: 5,
-                trDate: "2024-01-25",
-                trCategory: "Miscellaneous",
-                trAmount: 20.00,
-                trNotes: "Pizza"
-            },
-        ];
-
-        serialNumberCounter = transactions.length + 1
-  
-        localStorage.setItem("bizTrackTransactions", JSON.stringify(transactions));
-    }
+    transactions = core.parseStoredArray(localStorage, "bizTrackTransactions", defaultTransactions);
+    serialNumberCounter = core.nextTransactionId(transactions);
+    localStorage.setItem("bizTrackTransactions", JSON.stringify(transactions));
   
     renderTransactions(transactions);
 }
@@ -88,10 +83,16 @@ function newTransaction(event) {
     event.preventDefault();
     const trDate = document.getElementById("tr-date").value;
     const trCategory = document.getElementById("tr-category").value;
-    const trAmount = parseFloat(document.getElementById("tr-amount").value);
+    let trAmount;
+    try {
+        trAmount = core.assertNonNegativeNumber(document.getElementById("tr-amount").value, "Expense amount");
+    } catch (error) {
+        alert(error.message);
+        return;
+    }
     const trNotes = document.getElementById("tr-notes").value;
 
-    serialNumberCounter = transactions.length + 1;
+    serialNumberCounter = core.nextTransactionId(transactions);
     let trID = serialNumberCounter;
     
     const transaction = {
@@ -116,7 +117,7 @@ function newTransaction(event) {
 
 function renderTransactions(transactions) {
     const transactionTableBody = document.getElementById("tableBody");
-    transactionTableBody.innerHTML = "";
+    transactionTableBody.replaceChildren();
 
     const transactionToRender = transactions;
 
@@ -132,20 +133,50 @@ function renderTransactions(transactions) {
 
         const formattedAmount = typeof transaction.trAmount === 'number' ? `$${transaction.trAmount.toFixed(2)}` : '';
 
-        transactionRow.innerHTML = `
-            <td>${transaction.trID}</td>
-            <td>${transaction.trDate}</td>
-            <td>${transaction.trCategory}</td>
-            <td class="tr-amount">${formattedAmount}</td>
-            <td>${transaction.trNotes}</td>
-            <td class="action">
-                <i title="Edit" onclick="editRow('${transaction.trID}')" class="edit-icon fa-solid fa-pen-to-square"></i>
-                <i onclick="deleteTransaction('${transaction.trID}')" class="delete-icon fas fa-trash-alt"></i>
-            </td> 
-        `;
+        appendCells(transactionRow, [
+            transaction.trID,
+            transaction.trDate,
+            transaction.trCategory,
+        ]);
+        const amountCell = document.createElement("td");
+        amountCell.className = "tr-amount";
+        amountCell.textContent = formattedAmount;
+        transactionRow.appendChild(amountCell);
+        appendCells(transactionRow, [transaction.trNotes]);
+        transactionRow.appendChild(createActionCell(transaction.trID));
         transactionTableBody.appendChild(transactionRow);
   });
   displayExpenses();
+}
+
+function appendCells(row, values) {
+    values.forEach((value) => {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        row.appendChild(cell);
+    });
+}
+
+function createActionCell(trID) {
+    const actionCell = document.createElement("td");
+    actionCell.className = "action";
+
+    const editButton = document.createElement("button");
+    editButton.type = "button";
+    editButton.className = "icon-button edit-icon";
+    editButton.setAttribute("aria-label", `Edit expense ${trID}`);
+    editButton.innerHTML = '<i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>';
+    editButton.addEventListener("click", () => editRow(trID));
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "icon-button delete-icon";
+    deleteButton.setAttribute("aria-label", `Delete expense ${trID}`);
+    deleteButton.innerHTML = '<i class="fas fa-trash-alt" aria-hidden="true"></i>';
+    deleteButton.addEventListener("click", () => deleteTransaction(trID));
+
+    actionCell.append(editButton, deleteButton);
+    return actionCell;
 }
 
 function displayExpenses() {
@@ -154,9 +185,7 @@ function displayExpenses() {
     const totalExpenses = transactions
         .reduce((total, transaction) => total + transaction.trAmount,0);
 
-    resultElement.innerHTML = `
-        <span>Total Expenses: $${totalExpenses.toFixed(2)}</span>
-    `;
+    resultElement.textContent = `Total Expenses: $${totalExpenses.toFixed(2)}`;
 }
 
 function editRow(trID) {
@@ -189,11 +218,18 @@ function deleteTransaction(trID) {
     const indexToUpdate = transactions.findIndex(transaction => transaction.trID === trID);
 
     if (indexToUpdate !== -1) {
+        let trAmount;
+        try {
+            trAmount = core.assertNonNegativeNumber(document.getElementById("tr-amount").value, "Expense amount");
+        } catch (error) {
+            alert(error.message);
+            return;
+        }
         const updatedTransaction = {
             trID: trID,
             trDate: document.getElementById("tr-date").value,
             trCategory: document.getElementById("tr-category").value,
-            trAmount: parseFloat(document.getElementById("tr-amount").value),
+            trAmount,
             trNotes: document.getElementById("tr-notes").value,
         };
 
@@ -275,8 +311,5 @@ function exportToCSV() {
 }
   
 function generateCSV(data) {
-    const headers = Object.keys(data[0]).join(',');
-    const rows = data.map(order => Object.values(order).join(','));
-
-    return `${headers}\n${rows.join('\n')}`;
+    return core.generateCSV(data);
 }

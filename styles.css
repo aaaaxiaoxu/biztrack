@@ -14,9 +14,12 @@
     margin: 0;
     padding: 0;
     border: none;
-    outline: none;
     box-sizing: border-box;
     font-family: "Lato", sans-serif;
+}
+*:focus-visible {
+    outline: 3px solid #ffbf47;
+    outline-offset: 3px;
 }
 body {
     display: flex;
@@ -110,9 +113,12 @@ body {
 .menu a i {
     font-size: 1.5rem;
 }
+.menu-icon {
+    background: transparent;
+    cursor: pointer;
+}
 .menu-icon i {
     font-size: 1.5rem;
-    cursor: pointer;
 }
 .logout {
     position: absolute;
@@ -278,7 +284,6 @@ label {
 .form-container input[type=date]:focus,
 .form-container input[type=number]:focus {
     background-color: #ddd;
-    outline: none;
 }
 .button-col {
     display: flex;
@@ -444,6 +449,9 @@ th {
     padding: 15px;
     text-align: left;
 }
+th:focus-visible {
+    color: var(--brown-color);
+}
 th:hover {
     color: var(--brown-color);
 }
@@ -509,13 +517,99 @@ tfoot td {
 .edit-icon{
     padding-right: 1rem;
 }
-.action i {
-    font-size: 1rem;
+.icon-button {
+    background: transparent;
+    color: var(--black-color);
     cursor: pointer;
+    padding: 0.35rem;
+}
+.action i,
+.icon-button i {
+    font-size: 1rem;
     transition: all 0.5s ease-out;
 }
-.action i:hover {
+.action i:hover,
+.icon-button:hover i {
     transform: scale(1.2);
+}
+
+.language-control {
+    align-items: center;
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 0;
+}
+.language-control select {
+    background: #f1f1f1;
+    border: 1px solid #d5d5d5;
+    border-radius: 5px;
+    color: var(--black-color);
+    padding: 0.45rem;
+}
+.cookie-banner {
+    align-items: center;
+    background: #ffffff;
+    border-top: 4px solid var(--green-color);
+    bottom: 0;
+    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.18);
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    left: 0;
+    padding: 1rem 1.5rem;
+    position: fixed;
+    right: 0;
+    z-index: 20;
+}
+.cookie-banner p {
+    margin: 0.35rem 0;
+}
+.cookie-actions {
+    display: flex;
+    gap: 0.7rem;
+}
+.cookie-actions .btn,
+.privacy-container .btn {
+    background: var(--green-color);
+    border-radius: 5px;
+    color: var(--white-color);
+    cursor: pointer;
+    padding: 0.75rem 1rem;
+}
+.cookie-actions .secondary {
+    background: var(--brown-color);
+}
+.privacy-container,
+.guide-container,
+.about-container {
+    background: #fff;
+    border-radius: 10px;
+    padding: 2rem;
+}
+
+@media (max-width: 760px) {
+    body {
+        display: block;
+    }
+    .sidebar {
+        display: none;
+        position: fixed;
+        z-index: 10;
+    }
+    .form-columns,
+    .product-title,
+    .cookie-banner {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .first-col,
+    .second-col,
+    .third-col,
+    .order-first-col,
+    .order-second-col,
+    .order-third-col {
+        width: 100%;
+    }
 }
 
 .guide-container, .about-container {
@@ -659,5 +753,4 @@ ol {
       display: none;
     }
 } */
-
 

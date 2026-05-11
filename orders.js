@@ -19,72 +19,68 @@ function closeForm() {
 }
 
 let orders = [];
+const core = window.BizTrackCore;
+const defaultOrders = [
+    {
+        orderID: "1001",
+        orderDate: "2024-01-05",
+        itemName: "Baseball caps",
+        itemPrice: 25.00,
+        qtyBought: 2,
+        shipping: 2.50,
+        taxes: 9.00,
+        orderTotal: 61.50,
+        orderStatus: "Pending"
+    },
+    {
+        orderID: "1002",
+        orderDate: "2024-03-05",
+        itemName: "Water bottles",
+        itemPrice: 17.00,
+        qtyBought: 3,
+        shipping: 3.50,
+        taxes: 6.00,
+        orderTotal: 60.50,
+        orderStatus: "Processing"
+    },
+    {
+        orderID: "1003",
+        orderDate: "2024-02-05",
+        itemName: "Tote bags",
+        itemPrice: 20.00,
+        qtyBought: 4,
+        shipping: 2.50,
+        taxes: 2.00,
+        orderTotal: 84.50,
+        orderStatus: "Shipped"
+    },
+    {
+        orderID: "1004",
+        orderDate: "2023-01-05",
+        itemName: "Canvas prints",
+        itemPrice: 55.00,
+        qtyBought: 1,
+        shipping: 2.50,
+        taxes: 19.00,
+        orderTotal: 76.50,
+        orderStatus: "Delivered"
+    },
+    {
+        orderID: "1005",
+        orderDate: "2024-01-15",
+        itemName: "Beanies",
+        itemPrice: 15.00,
+        qtyBought: 2,
+        shipping: 3.90,
+        taxes: 4.00,
+        orderTotal: 37.90,
+        orderStatus: "Pending"
+    },
+];
 
 window.onload = function () {
-    const storedOrders = localStorage.getItem("bizTrackOrders");
-    if (storedOrders) {
-        orders = JSON.parse(storedOrders);
-    } else {
-        orders = [
-        {
-            orderID: "1001",
-            orderDate: "2024-01-05",
-            itemName: "Baseball caps",
-            itemPrice: 25.00,
-            qtyBought: 2,
-            shipping: 2.50,
-            taxes: 9.00,
-            orderTotal: 61.50,
-            orderStatus: "Pending"
-        },
-        {
-            orderID: "1002",
-            orderDate: "2024-03-05",
-            itemName: "Water bottles",
-            itemPrice: 17.00,
-            qtyBought: 3,
-            shipping: 3.50,
-            taxes: 6.00,
-            orderTotal: 60.50,
-            orderStatus: "Processing"
-        },
-        {
-            orderID: "1003",
-            orderDate: "2024-02-05",
-            itemName: "Tote bags",
-            itemPrice: 20.00,
-            qtyBought: 4,
-            shipping: 2.50,
-            taxes: 2.00,
-            orderTotal: 84.50,
-            orderStatus: "Shipped"
-        },
-        {
-            orderID: "1004",
-            orderDate: "2023-01-05",
-            itemName: "Canvas prints",
-            itemPrice: 55.00,
-            qtyBought: 1,
-            shipping: 2.50,
-            taxes: 19.00,
-            orderTotal: 76.50,
-            orderStatus: "Delivered"
-        },
-        {
-            orderID: "1005",
-            orderDate: "2024-01-15",
-            itemName: "Beanies",
-            itemPrice: 15.00,
-            qtyBought: 2,
-            shipping: 3.90,
-            taxes: 4.00,
-            orderTotal: 37.90,
-            orderStatus: "Pending"
-        },
-        ];
-
-        localStorage.setItem("bizTrackOrders", JSON.stringify(orders));
-    }
+    orders = core.parseStoredArray(localStorage, "bizTrackOrders", defaultOrders);
+    localStorage.setItem("bizTrackOrders", JSON.stringify(orders));
 
     renderOrders(orders);
 }
@@ -105,11 +101,21 @@ function newOrder(event) {
   const orderID = document.getElementById("order-id").value;
   const orderDate = document.getElementById("order-date").value;
   const itemName = document.getElementById("item-name").value;
-  const itemPrice = parseFloat(document.getElementById("item-price").value);
-  const qtyBought = parseInt(document.getElementById("qty-bought").value);
-  const shipping = parseFloat(document.getElementById("shipping").value);
-  const taxes = parseFloat(document.getElementById("taxes").value);
-  const orderTotal = ((itemPrice * qtyBought) + shipping + taxes);
+  let itemPrice;
+  let qtyBought;
+  let shipping;
+  let taxes;
+  let orderTotal;
+  try {
+    itemPrice = core.assertNonNegativeNumber(document.getElementById("item-price").value, "Item price");
+    qtyBought = core.assertNonNegativeNumber(document.getElementById("qty-bought").value, "Quantity");
+    shipping = core.assertNonNegativeNumber(document.getElementById("shipping").value, "Shipping");
+    taxes = core.assertNonNegativeNumber(document.getElementById("taxes").value, "Taxes");
+    orderTotal = core.calculateOrderTotal(itemPrice, qtyBought, shipping, taxes);
+  } catch (error) {
+    alert(error.message);
+    return;
+  }
   const orderStatus = document.getElementById("order-status").value;
 
   if (isDuplicateID(orderID, null)) {
@@ -140,7 +146,7 @@ function newOrder(event) {
 
 function renderOrders(orders) {
     const orderTableBody = document.getElementById("tableBody");
-    orderTableBody.innerHTML = "";
+    orderTableBody.replaceChildren();
 
     const orderToRender = orders;
     const statusMap = {
@@ -169,26 +175,61 @@ function renderOrders(orders) {
       const formattedTaxes = typeof order.taxes === 'number' ? `$${order.taxes.toFixed(2)}` : '';
       const formattedTotal = typeof order.orderTotal === 'number' ? `$${order.orderTotal.toFixed(2)}` : '';
 
-      orderRow.innerHTML = `
-        <td>${order.orderID}</td>
-        <td>${order.orderDate}</td>
-        <td>${order.itemName}</td>
-        <td>${formattedPrice}</td>
-        <td>${order.qtyBought}</td>
-        <td>${formattedShipping}</td>
-        <td>${formattedTaxes}</td>
-        <td class="order-total">${formattedTotal}</td>
-        <td>
-            <div class="status ${statusMap[order.orderStatus]}"><span>${order.orderStatus}</span></div>
-        </td>
-        <td class="action">
-            <i title="Edit" onclick="editRow('${order.orderID}')" class="edit-icon fa-solid fa-pen-to-square"></i>
-            <i onclick="deleteOrder('${order.orderID}')" class="delete-icon fas fa-trash-alt"></i>
-          </td> 
-      `;
+      appendCells(orderRow, [
+        order.orderID,
+        order.orderDate,
+        order.itemName,
+        formattedPrice,
+        order.qtyBought,
+        formattedShipping,
+        formattedTaxes,
+      ]);
+      const totalCell = document.createElement("td");
+      totalCell.className = "order-total";
+      totalCell.textContent = formattedTotal;
+      orderRow.appendChild(totalCell);
+      const statusCell = document.createElement("td");
+      const status = document.createElement("div");
+      status.className = `status ${statusMap[order.orderStatus] || ""}`;
+      const statusText = document.createElement("span");
+      statusText.textContent = order.orderStatus;
+      status.appendChild(statusText);
+      statusCell.appendChild(status);
+      orderRow.appendChild(statusCell);
+      orderRow.appendChild(createActionCell(order.orderID));
       orderTableBody.appendChild(orderRow);
   });
   displayRevenue();
+}
+
+function appendCells(row, values) {
+  values.forEach((value) => {
+    const cell = document.createElement("td");
+    cell.textContent = value;
+    row.appendChild(cell);
+  });
+}
+
+function createActionCell(orderID) {
+  const actionCell = document.createElement("td");
+  actionCell.className = "action";
+
+  const editButton = document.createElement("button");
+  editButton.type = "button";
+  editButton.className = "icon-button edit-icon";
+  editButton.setAttribute("aria-label", `Edit order ${orderID}`);
+  editButton.innerHTML = '<i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>';
+  editButton.addEventListener("click", () => editRow(orderID));
+
+  const deleteButton = document.createElement("button");
+  deleteButton.type = "button";
+  deleteButton.className = "icon-button delete-icon";
+  deleteButton.setAttribute("aria-label", `Delete order ${orderID}`);
+  deleteButton.innerHTML = '<i class="fas fa-trash-alt" aria-hidden="true"></i>';
+  deleteButton.addEventListener("click", () => deleteOrder(orderID));
+
+  actionCell.append(editButton, deleteButton);
+  return actionCell;
 }
 
 function displayRevenue() {
@@ -197,9 +238,7 @@ function displayRevenue() {
     const totalRevenue = orders
         .reduce((total, order) => total + order.orderTotal, 0);
 
-    resultElement.innerHTML = `
-        <span>Total Revenue: $${totalRevenue.toFixed(2)}</span>
-    `;
+    resultElement.textContent = `Total Revenue: $${totalRevenue.toFixed(2)}`;
 }
 
 function editRow(orderID) {
@@ -236,10 +275,21 @@ function updateOrder(orderID) {
     const indexToUpdate = orders.findIndex(order => order.orderID === orderID);
 
     if (indexToUpdate !== -1) {
-        const itemPrice = parseFloat(document.getElementById("item-price").value);
-        const qtyBought = parseInt(document.getElementById("qty-bought").value);
-        const shipping = parseFloat(document.getElementById("shipping").value);
-        const taxes = parseFloat(document.getElementById("taxes").value);
+        let itemPrice;
+        let qtyBought;
+        let shipping;
+        let taxes;
+        let orderTotal;
+        try {
+            itemPrice = core.assertNonNegativeNumber(document.getElementById("item-price").value, "Item price");
+            qtyBought = core.assertNonNegativeNumber(document.getElementById("qty-bought").value, "Quantity");
+            shipping = core.assertNonNegativeNumber(document.getElementById("shipping").value, "Shipping");
+            taxes = core.assertNonNegativeNumber(document.getElementById("taxes").value, "Taxes");
+            orderTotal = core.calculateOrderTotal(itemPrice, qtyBought, shipping, taxes);
+        } catch (error) {
+            alert(error.message);
+            return;
+        }
         const updatedOrder = {
             orderID: document.getElementById("order-id").value,
             orderDate: document.getElementById("order-date").value,
@@ -248,7 +298,7 @@ function updateOrder(orderID) {
             qtyBought: qtyBought,
             shipping: shipping,
             taxes: taxes,
-            orderTotal: ((itemPrice * qtyBought) + shipping + taxes),
+            orderTotal,
             orderStatus: document.getElementById("order-status").value,
         };
 
@@ -343,8 +393,5 @@ function exportToCSV() {
 }
   
 function generateCSV(data) {
-    const headers = Object.keys(data[0]).join(',');
-    const rows = data.map(order => Object.values(order).join(','));
-
-    return `${headers}\n${rows.join('\n')}`;
+    return core.generateCSV(data);
 }
