@@ -9,8 +9,16 @@ function closeSidebar() {
   document.getElementById('sidebar').style.display = 'none';
 }
 
+let barChart;
+let donutChart;
 
-window.onload = function () {
+function dashboardT(key, params) {
+  return window.BizTrackI18n?.useDashboardI18n().t(key, params)
+    || window.BizTrackI18n?.useCommonI18n().t(key, params)
+    || key;
+}
+
+function renderDashboardMetrics() {
   const core = window.BizTrackCore;
   const defaultExpenses = [
     {
@@ -123,7 +131,9 @@ window.onload = function () {
   renderMetric(expDiv, "Expenses", `$${totalExpenses.toFixed(2)}`);
   renderMetric(balDiv, "Balance", `$${totalBalance.toFixed(2)}`);
   renderMetric(ordDiv, "Orders", numOrders);
-};
+}
+
+window.onload = renderDashboardMetrics;
 
 function calculateExpTotal(transactions) {
   return window.BizTrackCore.sumBy(transactions, "trAmount");
@@ -136,8 +146,7 @@ function renderMetric(container, title, value) {
   container.replaceChildren();
   const titleSpan = document.createElement("span");
   titleSpan.className = "title";
-  titleSpan.dataset.i18nOriginal = title;
-  titleSpan.textContent = (window.BizTrackI18n?.translate || ((text) => text))(title);
+  titleSpan.textContent = dashboardT(title);
   const valueSpan = document.createElement("span");
   valueSpan.className = "amount-value";
   valueSpan.textContent = value;
@@ -167,7 +176,8 @@ function calculateCategorySales(products) {
 
 
 function initializeChart() {
-  const items = JSON.parse(localStorage.getItem('bizTrackProducts')) || [
+  const core = window.BizTrackCore;
+  const items = core.parseStoredArray(localStorage, 'bizTrackProducts', [
     {
       prodID: "PD001",
       prodName: "Baseball caps",
@@ -208,7 +218,7 @@ function initializeChart() {
       prodPrice: 17.00,
       prodSold: 40
     },
-  ];
+  ]);
   const categorySalesData = calculateCategorySales(items);
 
   const sortedCategorySales = Object.entries(categorySalesData)
@@ -217,7 +227,7 @@ function initializeChart() {
 
   const barChartOptions = {
       series: [{
-          name: "Total Sales",
+          name: dashboardT("Total Sales"),
           data: Object.values(sortedCategorySales),
       }],
       chart: {
@@ -247,14 +257,14 @@ function initializeChart() {
         opacity: 0.7,
       },
       xaxis: {
-        categories: Object.keys(sortedCategorySales),
+        categories: Object.keys(sortedCategorySales).map((category) => dashboardT(category)),
         axisTicks: {
           show: false,
         },
       },
       yaxis: {
         title: {
-          text: 'Total Sales ($)',
+          text: dashboardT("Total Sales ($)"),
         },
         axisTicks: {
           show: false,
@@ -269,7 +279,8 @@ function initializeChart() {
       }
     };
     
-  const barChart = new ApexCharts(
+  if (barChart) barChart.destroy();
+  barChart = new ApexCharts(
     document.querySelector('#bar-chart'), barChartOptions
   );
   barChart.render();
@@ -293,7 +304,7 @@ function initializeChart() {
     return categoryExpenses;
   }
 
-  const expItems = JSON.parse(localStorage.getItem('bizTrackTransactions')) || [
+  const expItems = core.parseStoredArray(localStorage, 'bizTrackTransactions', [
     {
       trID: 1,
       trDate: "2024-01-05",
@@ -329,12 +340,12 @@ function initializeChart() {
       trAmount: 20.00,
       trNotes: "Pizza"
   },
-  ];
+  ]);
   const categoryExpData = calculateCategoryExp(expItems);
 
   const donutChartOptions = {
     series: Object.values(categoryExpData),
-    labels: Object.keys(categoryExpData),
+    labels: Object.keys(categoryExpData).map((category) => dashboardT(category)),
     chart: {
       // height: 350,
       type: 'donut',
@@ -379,9 +390,17 @@ function initializeChart() {
     },
   };
   
-  const donutChart = new ApexCharts(
+  if (donutChart) donutChart.destroy();
+  donutChart = new ApexCharts(
     document.querySelector('#donut-chart'),
     donutChartOptions
   );
   donutChart.render();
 };
+
+window.addEventListener("biztrack:languagechange", () => {
+  renderDashboardMetrics();
+  if (document.querySelector("#bar-chart") && document.querySelector("#donut-chart")) {
+    initializeChart();
+  }
+});

@@ -21,6 +21,8 @@ function closeForm() {
 
 let products = [];
 const core = window.BizTrackCore;
+const productsI18n = window.BizTrackI18n?.useProductsI18n();
+const productsCommonI18n = window.BizTrackI18n?.useCommonI18n();
 const defaultProducts = [
   {
     prodID: "PD001",
@@ -72,13 +74,23 @@ function init() {
 }
 
 function addOrUpdate(event) {
-  let type = document.getElementById("submitBtn").textContent;
-  if (type === 'Add') {
+  const mode = document.getElementById("submitBtn").dataset.mode || "add";
+  if (mode === "add") {
       newProduct(event);
-  } else if (type === 'Update'){
+  } else if (mode === "update"){
       const prodID = document.getElementById("product-id").value;
       updateProduct(prodID);
   }
+}
+
+function productT(key, params) {
+  return productsI18n?.t(key, params) || productsCommonI18n?.t(key, params) || key;
+}
+
+function setSubmitMode(mode) {
+  const submitButton = document.getElementById("submitBtn");
+  submitButton.dataset.mode = mode;
+  submitButton.textContent = productT(mode === "update" ? "Update" : "Add");
 }
 
 function newProduct(event) {
@@ -98,7 +110,7 @@ function newProduct(event) {
   }
 
   if (isDuplicateID(prodID, null)) {
-    alert("Product ID already exists. Please use a unique ID.");
+    alert(productT("Product ID already exists. Please use a unique ID."));
     return;
   }
 
@@ -117,6 +129,7 @@ function newProduct(event) {
   localStorage.setItem("bizTrackProducts", JSON.stringify(products));
 
   document.getElementById("product-form").reset();
+  setSubmitMode("add");
 }
 
 
@@ -165,14 +178,14 @@ function createActionCell(prodID) {
   const editButton = document.createElement("button");
   editButton.type = "button";
   editButton.className = "icon-button edit-icon";
-  editButton.setAttribute("aria-label", `Edit product ${prodID}`);
+  editButton.setAttribute("aria-label", productT("Edit product", { id: prodID }));
   editButton.innerHTML = '<i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>';
   editButton.addEventListener("click", () => editRow(prodID));
 
   const deleteButton = document.createElement("button");
   deleteButton.type = "button";
   deleteButton.className = "icon-button delete-icon";
-  deleteButton.setAttribute("aria-label", `Delete product ${prodID}`);
+  deleteButton.setAttribute("aria-label", productT("Delete product", { id: prodID }));
   deleteButton.innerHTML = '<i class="fas fa-trash-alt" aria-hidden="true"></i>';
   deleteButton.addEventListener("click", () => deleteProduct(prodID));
 
@@ -190,7 +203,7 @@ function editRow(prodID) {
   document.getElementById("product-price").value = productToEdit.prodPrice;
   document.getElementById("product-sold").value = productToEdit.prodSold;
 
-  document.getElementById("submitBtn").textContent = "Update";
+  setSubmitMode("update");
 
   document.getElementById("product-form").style.display = "block";
 }
@@ -230,7 +243,7 @@ function updateProduct(prodID) {
         };
 
         if (isDuplicateID(updatedProduct.prodID, prodID)) {
-            alert("Product ID already exists. Please use a unique ID.");
+            alert(productT("Product ID already exists. Please use a unique ID."));
             return;
         }
 
@@ -241,7 +254,7 @@ function updateProduct(prodID) {
         renderProducts(products);
 
         document.getElementById("product-form").reset();
-        document.getElementById("submitBtn").textContent = "Add";
+        setSubmitMode("add");
     }
 }
 
@@ -318,5 +331,10 @@ function exportToCSV() {
 function generateCSV(data) {
   return core.generateCSV(data);
 }
+
+window.addEventListener("biztrack:languagechange", () => {
+  renderProducts(products);
+  setSubmitMode(document.getElementById("submitBtn").dataset.mode || "add");
+});
 
 init();

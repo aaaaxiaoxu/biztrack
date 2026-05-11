@@ -10,52 +10,52 @@
     <link rel="stylesheet" href="./styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
     <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
-    <title>Products - BizTrack</title>
+    <title>{{ t("documentTitle") }}</title>
 </head>
-<body>
+<body data-i18n-page="products">
     <div id="sidebar" class="sidebar">
         <div class="logo">
             <a href="./index.html">
                 <i class="fas fa-b"></i>
                 <span>BizTrack</span>
             </a>
-            <i class="fa-solid fa-xmark" title="Close" onclick="closeSidebar()"></i>
+            <i class="fa-solid fa-xmark" title="{{ t('common.Close') }}" onclick="closeSidebar()"></i>
         </div>
         <ul class="menu">
             <li>
                 <a href="./index.html">
                     <i class="fa-solid fa-gauge-high"></i>
-                    <span>Dashboard</span>
+                    <span>{{ t("common.Dashboard") }}</span>
                 </a>
             </li>
             <li class="active">
                 <a href="./products.html">
                     <i class="fas fa-dolly"></i>
-                    <span>Products</span>
+                    <span>{{ t("common.Products") }}</span>
                 </a>
             </li>
             <li>
                 <a href="./orders.html">
                     <i class="fas fa-shopping-cart"></i>
-                    <span>Orders</span>
+                    <span>{{ t("common.Orders") }}</span>
                 </a>
             </li>
             <li>
                 <a href="./finances.html">
                     <i class="fas fa-sack-dollar"></i>
-                    <span>Expenses</span>
+                    <span>{{ t("common.Expenses") }}</span>
                 </a>
             </li>
             <li>
                 <a href="./help.html">
                     <i class="fas fa-question-circle"></i>
-                    <span>Help</span>
+                    <span>{{ t("common.Help") }}</span>
                 </a>
             </li>
             <li class="logout">
                 <a href="./about.html">
                     <i class="fa-solid fa-users-line"></i>
-                    <span>Meet the Developer</span>
+                    <span>{{ t("common.Meet the Developer") }}</span>
                 </a>
             </li>
         </ul>
@@ -68,12 +68,12 @@
             </div>
             <div class="header-title">
                 <!-- <span>Primary</span> -->
-                <h2>Products</h2>
+                <h2>{{ t("title") }}</h2>
             </div>
             <div class="user-info">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="search" id="searchInput" placeholder="Search">
+                    <input type="search" id="searchInput" placeholder="{{ t('common.Search') }}">
                 </div>
                 <!-- <i class="fas fa-user-alt fa-xl"></i> -->
             </div>
@@ -81,75 +81,75 @@
 
         <div class="table-wrapper">
             <div class="product-title">
-                <h3 class="main-title">Products</h3>
+                <h3 class="main-title">{{ t("title") }}</h3>
                 <div class="product-button">
-                    <button class="add-button" onclick="openForm()">Add Product</button>
-                    <button class="download-button" onclick="exportToCSV()">Download CSV</button>
+                    <button class="add-button" onclick="openForm()">{{ t("addProduct") }}</button>
+                    <button class="download-button" onclick="exportToCSV()">{{ t("downloadCSV") }}</button>
                 </div>
             </div>
             <div class="form-popup">
                 <form class="form-container" id="product-form" onsubmit="addOrUpdate(event)">
                     <div class="form-columns">
                         <div class="first-col">
-                            <label for="product-id"><b>Product ID: </b></label>
+                            <label for="product-id"><b>{{ t("common.Product ID:") }} </b></label>
                             <input type="text" id="product-id" placeholder="PD001" required>
                         
-                            <label for="product-name"><b>Product Name</b></label>
+                            <label for="product-name"><b>{{ t("common.Product Name") }}</b></label>
                             <select name="product-name" id="product-name" required>
-                                <option value="" disabled selected hidden>Choose a product</option>
+                                <option value="" disabled selected hidden>{{ t("common.Choose a product") }}</option>
                                 <optgroup label="Hats">
-                                    <option value="Baseball caps">Baseball caps</option>
-                                    <option value="Snapbacks">Snapbacks</option>
-                                    <option value="Beanies">Beanies</option>
-                                    <option value="Bucket hats">Bucket hats</option>
+                                    <option value="Baseball caps">{{ t("common.Baseball caps") }}</option>
+                                    <option value="Snapbacks">{{ t("common.Snapbacks") }}</option>
+                                    <option value="Beanies">{{ t("common.Beanies") }}</option>
+                                    <option value="Bucket hats">{{ t("common.Bucket hats") }}</option>
                                 </optgroup>
                                 <optgroup label="Drinkware">
-                                    <option value="Mugs">Mugs</option>
-                                    <option value="Water bottles">Water bottles</option>
-                                    <option value="Tumblers">Tumblers</option>
+                                    <option value="Mugs">{{ t("common.Mugs") }}</option>
+                                    <option value="Water bottles">{{ t("common.Water bottles") }}</option>
+                                    <option value="Tumblers">{{ t("common.Tumblers") }}</option>
                                 </optgroup>   
                                 <optgroup label="Clothing">
-                                    <option value="T-shirts">T-shirts</option>
-                                    <option value="Sweatshirts">Sweatshirts</option>
-                                    <option value="Hoodies">Hoodies</option>
+                                    <option value="T-shirts">{{ t("common.T-shirts") }}</option>
+                                    <option value="Sweatshirts">{{ t("common.Sweatshirts") }}</option>
+                                    <option value="Hoodies">{{ t("common.Hoodies") }}</option>
                                 </optgroup>   
                                 <optgroup label="Accessories">
-                                    <option value="Pillow cases">Pillow cases</option>
-                                    <option value="Tote bags">Tote bags</option>
-                                    <option value="Stickers">Stickers</option>
+                                    <option value="Pillow cases">{{ t("common.Pillow cases") }}</option>
+                                    <option value="Tote bags">{{ t("common.Tote bags") }}</option>
+                                    <option value="Stickers">{{ t("common.Stickers") }}</option>
                                 </optgroup>   
                                 <optgroup label="Home decor">
-                                    <option value="Posters">Posters</option>
-                                    <option value="Framed posters">Framed posters</option>
-                                    <option value="Canvas prints">Canvas prints</option>
+                                    <option value="Posters">{{ t("common.Posters") }}</option>
+                                    <option value="Framed posters">{{ t("common.Framed posters") }}</option>
+                                    <option value="Canvas prints">{{ t("common.Canvas prints") }}</option>
                                 </optgroup>
                             </select>
     
-                            <label for="product-desc"><b>Product Description:</b></label>
-                            <input type="text" id="product-desc" placeholder="Travel Mug" required>
+                            <label for="product-desc"><b>{{ t("common.Product Description:") }}</b></label>
+                            <input type="text" id="product-desc" placeholder="{{ t('common.Travel Mug') }}" required>
                         </div>
                         <div class="second-col">
-                            <label for="product-cat"><b>Product Category:</b></label>
+                            <label for="product-cat"><b>{{ t("common.Product Category:") }}</b></label>
                             <select name="product-cat" id="product-cat" required>
-                                <option value="" disabled selected>Choose a category</option>
-                                <option value="Clothing">Clothing</option>
-                                <option value="Drinkware">Drinkware</option>
-                                <option value="Accessories">Accessories</option>
-                                <option value="Hats">Hats</option>
-                                <option value="Home decor">Home decor</option>
+                                <option value="" disabled selected>{{ t("common.Choose a category") }}</option>
+                                <option value="Clothing">{{ t("common.Clothing") }}</option>
+                                <option value="Drinkware">{{ t("common.Drinkware") }}</option>
+                                <option value="Accessories">{{ t("common.Accessories") }}</option>
+                                <option value="Hats">{{ t("common.Hats") }}</option>
+                                <option value="Home decor">{{ t("common.Home decor") }}</option>
                             </select>
     
-                            <label for="product-price"><b>Product Price:</b></label>
+                            <label for="product-price"><b>{{ t("common.Product Price:") }}</b></label>
                             <input type="number" id="product-price" placeholder="$0.00" min="0.00" max="10000.00" step="0.01" required>
     
-                            <label for="product-sold"><b>Number of Units Sold:</b></label>
+                            <label for="product-sold"><b>{{ t("common.Number of Units Sold:") }}</b></label>
                             <input type="number" id="product-sold" placeholder="10" required>
                         </div>
                     </div>
                     
                     <div class="button-col">
-                        <button type="submit" class="btn" id="submitBtn">Add</button>
-                        <button type="button" class="btn cancel" onclick="closeForm()">Cancel</button>
+                        <button type="submit" class="btn" id="submitBtn">{{ t("common.Add") }}</button>
+                        <button type="button" class="btn cancel" onclick="closeForm()">{{ t("common.Cancel") }}</button>
                     </div>
                 </form>
             </div>
@@ -157,13 +157,13 @@
                 <table id="product-table">
                     <thead>
                         <tr>
-                            <th onclick="sortTable('prodID')">Product ID</th>
-                            <th onclick="sortTable('prodName')">Product Name</th>
-                            <th onclick="sortTable('prodDesc')">Description</th>
-                            <th onclick="sortTable('prodCat')">Category</th>
-                            <th onclick="sortTable('prodPrice')">Price</th>
-                            <th onclick="sortTable('prodSold')">Units Sold</th>
-                            <th>Action</th>
+                            <th onclick="sortTable('prodID')">{{ t("common.Product ID") }}</th>
+                            <th onclick="sortTable('prodName')">{{ t("common.Product Name") }}</th>
+                            <th onclick="sortTable('prodDesc')">{{ t("common.Description") }}</th>
+                            <th onclick="sortTable('prodCat')">{{ t("common.Category") }}</th>
+                            <th onclick="sortTable('prodPrice')">{{ t("common.Price") }}</th>
+                            <th onclick="sortTable('prodSold')">{{ t("common.Units Sold") }}</th>
+                            <th>{{ t("common.Action") }}</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -179,6 +179,7 @@
     </div>
     </div>
     <script src="./app-core.js"></script>
+    <script src="./i18n.js"></script>
     <script src="./common.js"></script>
 
     <script src="./products.js"></script>

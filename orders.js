@@ -20,6 +20,8 @@ function closeForm() {
 
 let orders = [];
 const core = window.BizTrackCore;
+const ordersI18n = window.BizTrackI18n?.useOrdersI18n();
+const ordersCommonI18n = window.BizTrackI18n?.useCommonI18n();
 const defaultOrders = [
     {
         orderID: "1001",
@@ -86,13 +88,23 @@ window.onload = function () {
 }
 
 function addOrUpdate(event) {
-    let type = document.getElementById("submitBtn").textContent;
-    if (type === 'Add') {
+    const mode = document.getElementById("submitBtn").dataset.mode || "add";
+    if (mode === "add") {
         newOrder(event);
-    } else if (type === 'Update'){
+    } else if (mode === "update"){
         const orderID = document.getElementById("order-id").value;
         updateOrder(orderID);
     }
+}
+
+function orderT(key, params) {
+    return ordersI18n?.t(key, params) || ordersCommonI18n?.t(key, params) || key;
+}
+
+function setSubmitMode(mode) {
+    const submitButton = document.getElementById("submitBtn");
+    submitButton.dataset.mode = mode;
+    submitButton.textContent = orderT(mode === "update" ? "Update" : "Add");
 }
 
 
@@ -119,7 +131,7 @@ function newOrder(event) {
   const orderStatus = document.getElementById("order-status").value;
 
   if (isDuplicateID(orderID, null)) {
-    alert("Order ID already exists. Please use a unique ID.");
+    alert(orderT("Order ID already exists. Please use a unique ID."));
     return;
   }
 
@@ -141,6 +153,7 @@ function newOrder(event) {
   localStorage.setItem("bizTrackOrders", JSON.stringify(orders));
 
   document.getElementById("order-form").reset();
+  setSubmitMode("add");
 }
 
 
@@ -192,7 +205,7 @@ function renderOrders(orders) {
       const status = document.createElement("div");
       status.className = `status ${statusMap[order.orderStatus] || ""}`;
       const statusText = document.createElement("span");
-      statusText.textContent = order.orderStatus;
+      statusText.textContent = orderT(order.orderStatus);
       status.appendChild(statusText);
       statusCell.appendChild(status);
       orderRow.appendChild(statusCell);
@@ -217,14 +230,14 @@ function createActionCell(orderID) {
   const editButton = document.createElement("button");
   editButton.type = "button";
   editButton.className = "icon-button edit-icon";
-  editButton.setAttribute("aria-label", `Edit order ${orderID}`);
+  editButton.setAttribute("aria-label", orderT("Edit order", { id: orderID }));
   editButton.innerHTML = '<i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>';
   editButton.addEventListener("click", () => editRow(orderID));
 
   const deleteButton = document.createElement("button");
   deleteButton.type = "button";
   deleteButton.className = "icon-button delete-icon";
-  deleteButton.setAttribute("aria-label", `Delete order ${orderID}`);
+  deleteButton.setAttribute("aria-label", orderT("Delete order", { id: orderID }));
   deleteButton.innerHTML = '<i class="fas fa-trash-alt" aria-hidden="true"></i>';
   deleteButton.addEventListener("click", () => deleteOrder(orderID));
 
@@ -238,7 +251,7 @@ function displayRevenue() {
     const totalRevenue = orders
         .reduce((total, order) => total + order.orderTotal, 0);
 
-    resultElement.textContent = `Total Revenue: $${totalRevenue.toFixed(2)}`;
+    resultElement.textContent = orderT("Total Revenue", { amount: `$${totalRevenue.toFixed(2)}` });
 }
 
 function editRow(orderID) {
@@ -254,7 +267,7 @@ function editRow(orderID) {
     document.getElementById("order-total").value = orderToEdit.orderTotal;
     document.getElementById("order-status").value = orderToEdit.orderStatus;
 
-    document.getElementById("submitBtn").textContent = "Update";
+    setSubmitMode("update");
 
     document.getElementById("order-form").style.display = "block";
 }
@@ -303,7 +316,7 @@ function updateOrder(orderID) {
         };
 
         if (isDuplicateID(updatedOrder.orderID, orderID)) {
-            alert("Order ID already exists. Please use a unique ID.");
+            alert(orderT("Order ID already exists. Please use a unique ID."));
             return;
         }
 
@@ -314,7 +327,7 @@ function updateOrder(orderID) {
         renderOrders(orders);
 
         document.getElementById("order-form").reset();
-        document.getElementById("submitBtn").textContent = "Add";
+        setSubmitMode("add");
     }
 }
 
@@ -395,3 +408,8 @@ function exportToCSV() {
 function generateCSV(data) {
     return core.generateCSV(data);
 }
+
+window.addEventListener("biztrack:languagechange", () => {
+    renderOrders(orders);
+    setSubmitMode(document.getElementById("submitBtn").dataset.mode || "add");
+});

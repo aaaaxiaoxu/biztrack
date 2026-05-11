@@ -22,6 +22,8 @@ function closeForm() {
 let transactions = [];
 let serialNumberCounter;
 const core = window.BizTrackCore;
+const expensesI18n = window.BizTrackI18n?.useExpensesI18n();
+const expensesCommonI18n = window.BizTrackI18n?.useCommonI18n();
 const defaultTransactions = [
     {
         trID: 1,
@@ -69,13 +71,23 @@ window.onload = function () {
 }
 
 function addOrUpdate(event) {
-    let type = document.getElementById("submitBtn").textContent;
-    if (type === 'Add') {
+    const mode = document.getElementById("submitBtn").dataset.mode || "add";
+    if (mode === "add") {
         newTransaction(event);
-    } else if (type === 'Update'){
+    } else if (mode === "update"){
         const trId = document.getElementById("tr-id").value;
         updateTransaction(+trId); // convert to number
     }
+}
+
+function expenseT(key, params) {
+    return expensesI18n?.t(key, params) || expensesCommonI18n?.t(key, params) || key;
+}
+
+function setSubmitMode(mode) {
+    const submitButton = document.getElementById("submitBtn");
+    submitButton.dataset.mode = mode;
+    submitButton.textContent = expenseT(mode === "update" ? "Update" : "Add");
 }
 
 
@@ -110,8 +122,9 @@ function newTransaction(event) {
 
     serialNumberCounter++;
     displayExpenses();
-  
+
     document.getElementById("transaction-form").reset();
+    setSubmitMode("add");
 }
 
 
@@ -164,14 +177,14 @@ function createActionCell(trID) {
     const editButton = document.createElement("button");
     editButton.type = "button";
     editButton.className = "icon-button edit-icon";
-    editButton.setAttribute("aria-label", `Edit expense ${trID}`);
+    editButton.setAttribute("aria-label", expenseT("Edit expense", { id: trID }));
     editButton.innerHTML = '<i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>';
     editButton.addEventListener("click", () => editRow(trID));
 
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
     deleteButton.className = "icon-button delete-icon";
-    deleteButton.setAttribute("aria-label", `Delete expense ${trID}`);
+    deleteButton.setAttribute("aria-label", expenseT("Delete expense", { id: trID }));
     deleteButton.innerHTML = '<i class="fas fa-trash-alt" aria-hidden="true"></i>';
     deleteButton.addEventListener("click", () => deleteTransaction(trID));
 
@@ -185,7 +198,7 @@ function displayExpenses() {
     const totalExpenses = transactions
         .reduce((total, transaction) => total + transaction.trAmount,0);
 
-    resultElement.textContent = `Total Expenses: $${totalExpenses.toFixed(2)}`;
+    resultElement.textContent = expenseT("Total Expenses", { amount: `$${totalExpenses.toFixed(2)}` });
 }
 
 function editRow(trID) {
@@ -197,7 +210,7 @@ function editRow(trID) {
     document.getElementById("tr-amount").value = trToEdit.trAmount;
     document.getElementById("tr-notes").value = trToEdit.trNotes;
   
-    document.getElementById("submitBtn").textContent = "Update";
+    setSubmitMode("update");
 
     document.getElementById("transaction-form").style.display = "block";
   }
@@ -240,7 +253,7 @@ function deleteTransaction(trID) {
         renderTransactions(transactions);
 
         document.getElementById("transaction-form").reset();
-        document.getElementById("submitBtn").textContent = "Add";
+        setSubmitMode("add");
     }
 }
 
@@ -313,3 +326,8 @@ function exportToCSV() {
 function generateCSV(data) {
     return core.generateCSV(data);
 }
+
+window.addEventListener("biztrack:languagechange", () => {
+    renderTransactions(transactions);
+    setSubmitMode(document.getElementById("submitBtn").dataset.mode || "add");
+});
