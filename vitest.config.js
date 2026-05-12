@@ -6,7 +6,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov"],
-      include: ["app-core.js"],
+      include: ["app-core.js", "order-state.js"],
       thresholds: {
         statements: 80,
         branches: 80,

@@ -160,7 +160,9 @@
     "Export to CSV": "匯出 CSV",
     "Total Revenue": "總收入：{amount}",
     "Order ID already exists. Please use a unique ID.": "訂單編號已存在，請使用唯一編號。",
-    "No orders found": "暫無訂單"
+    "No orders found": "暫無訂單",
+    "New orders must start as Pending.": "新訂單必須由待處理狀態開始。",
+    "Order {id} cannot move from {from} to {to}.": "訂單 {id} 不能由{from}直接變更為{to}。"
   },
   "expenses": {
     "documentTitle": "支出 - BizTrack",

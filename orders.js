@@ -11,16 +11,25 @@ function closeSidebar() {
 
 function openForm() {
     var form = document.getElementById("order-form")
-    form.style.display = (form.style.display === "block") ? "none" : "block";
+    const willOpen = form.style.display !== "block";
+    form.style.display = willOpen ? "block" : "none";
+    if (willOpen) {
+        form.reset();
+        setSubmitMode("add");
+    }
 }
 
 function closeForm() {
-    document.getElementById("order-form").style.display = "none";
+    const form = document.getElementById("order-form");
+    form.style.display = "none";
+    form.reset();
+    setSubmitMode("add");
 }
 
 let orders = [];
 const core = window.BizTrackCore;
 const tables = window.BizTrackTables;
+const orderState = window.BizTrackOrderState;
 const ordersI18n = window.BizTrackI18n?.useOrdersI18n();
 const ordersCommonI18n = window.BizTrackI18n?.useCommonI18n();
 let orderTable;
@@ -83,10 +92,12 @@ const defaultOrders = [
 ];
 
 window.onload = function () {
-    orders = core.parseStoredArray(localStorage, "bizTrackOrders", defaultOrders);
+    orders = core.parseStoredArray(localStorage, "bizTrackOrders", defaultOrders)
+        .map(orderState.normalizeOrder);
     localStorage.setItem("bizTrackOrders", JSON.stringify(orders));
 
     renderOrders(orders);
+    setSubmitMode("add");
 }
 
 function addOrUpdate(event) {
@@ -103,10 +114,32 @@ function orderT(key, params) {
     return ordersI18n?.t(key, params) || ordersCommonI18n?.t(key, params) || key;
 }
 
-function setSubmitMode(mode) {
+function setSubmitMode(mode, currentStatus) {
     const submitButton = document.getElementById("submitBtn");
     submitButton.dataset.mode = mode;
     submitButton.textContent = orderT(mode === "update" ? "Update" : "Add");
+    updateStatusOptions(mode, currentStatus);
+}
+
+function updateStatusOptions(mode, currentStatus) {
+    const statusSelect = document.getElementById("order-status");
+    if (!statusSelect) return;
+
+    const workflowStatus = mode === "update"
+        ? orderState.normalizeStatus(currentStatus || statusSelect.value)
+        : orderState.STATUSES.PENDING;
+    const availableStatuses = mode === "update"
+        ? orderState.getAvailableStatuses(workflowStatus)
+        : [orderState.STATUSES.PENDING];
+
+    Array.from(statusSelect.options).forEach((option) => {
+        if (!option.value) return;
+        option.disabled = !availableStatuses.includes(option.value);
+    });
+
+    statusSelect.value = availableStatuses.includes(statusSelect.value)
+        ? statusSelect.value
+        : workflowStatus;
 }
 
 
@@ -130,7 +163,13 @@ function newOrder(event) {
     alert(error.message);
     return;
   }
-  const orderStatus = document.getElementById("order-status").value;
+  const requestedStatus = document.getElementById("order-status").value || orderState.STATUSES.PENDING;
+  if (!orderState.isInitialStatus(requestedStatus)) {
+    alert(orderT("New orders must start as Pending."));
+    updateStatusOptions("add");
+    return;
+  }
+  const orderStatus = orderState.STATUSES.PENDING;
 
   if (isDuplicateID(orderID, null)) {
     alert(orderT("Order ID already exists. Please use a unique ID."));
@@ -171,13 +210,6 @@ function renderOrders(orders) {
 }
 
 function buildOrderColumns() {
-    const statusMap = {
-        "Pending": "pending",
-        "Processing": "processing",
-        "Shipped": "shipped",
-        "Delivered": "delivered"
-    };
-
     return [
         tables.plainTextColumn(orderT("Order ID"), "orderID"),
         tables.plainTextColumn(orderT("Order Date"), "orderDate", { sorter: "date" }),
@@ -221,8 +253,8 @@ function buildOrderColumns() {
             title: orderT("Order Status"),
             field: "orderStatus",
             formatter(cell) {
-                const status = cell.getValue();
-                const className = statusMap[status] || "";
+                const status = orderState.normalizeStatus(cell.getValue());
+                const className = orderState.getStatusClass(status);
                 return `<div class="status ${className}"><span>${tables.escapeHtml(orderT(status))}</span></div>`;
             },
         },
@@ -247,6 +279,7 @@ function displayRevenue() {
 
 function editRow(orderID) {
     const orderToEdit = orders.find(order => order.orderID === orderID);
+    if (!orderToEdit) return;
 
     document.getElementById("order-id").value = orderToEdit.orderID;
     document.getElementById("order-date").value = orderToEdit.orderDate;
@@ -256,9 +289,9 @@ function editRow(orderID) {
     document.getElementById("shipping").value = orderToEdit.shipping;
     document.getElementById("taxes").value = orderToEdit.taxes;
     document.getElementById("order-total").value = orderToEdit.orderTotal;
-    document.getElementById("order-status").value = orderToEdit.orderStatus;
+    document.getElementById("order-status").value = orderState.normalizeStatus(orderToEdit.orderStatus);
 
-    setSubmitMode("update");
+    setSubmitMode("update", orderToEdit.orderStatus);
 
     document.getElementById("order-form").style.display = "block";
 }
@@ -279,19 +312,32 @@ function updateOrder(orderID) {
     const indexToUpdate = orders.findIndex(order => order.orderID === orderID);
 
     if (indexToUpdate !== -1) {
+        const currentOrder = orders[indexToUpdate];
         let itemPrice;
         let qtyBought;
         let shipping;
         let taxes;
         let orderTotal;
+        let orderStatus;
         try {
             itemPrice = core.assertNonNegativeNumber(document.getElementById("item-price").value, "Item price");
             qtyBought = core.assertNonNegativeNumber(document.getElementById("qty-bought").value, "Quantity");
             shipping = core.assertNonNegativeNumber(document.getElementById("shipping").value, "Shipping");
             taxes = core.assertNonNegativeNumber(document.getElementById("taxes").value, "Taxes");
             orderTotal = core.calculateOrderTotal(itemPrice, qtyBought, shipping, taxes);
+            orderStatus = orderState.assertValidTransition(currentOrder.orderStatus, document.getElementById("order-status").value);
         } catch (error) {
-            alert(error.message);
+            const requestedStatus = document.getElementById("order-status").value;
+            if (error.message.startsWith("Invalid order status transition")) {
+                alert(orderT("Order {id} cannot move from {from} to {to}.", {
+                    id: currentOrder.orderID,
+                    from: orderT(orderState.normalizeStatus(currentOrder.orderStatus)),
+                    to: orderT(requestedStatus || "Choose a status"),
+                }));
+                updateStatusOptions("update", currentOrder.orderStatus);
+            } else {
+                alert(error.message);
+            }
             return;
         }
         const updatedOrder = {
@@ -303,7 +349,7 @@ function updateOrder(orderID) {
             shipping: shipping,
             taxes: taxes,
             orderTotal,
-            orderStatus: document.getElementById("order-status").value,
+            orderStatus,
         };
 
         if (isDuplicateID(updatedOrder.orderID, orderID)) {
@@ -373,5 +419,9 @@ function generateCSV(data) {
 
 window.addEventListener("biztrack:languagechange", () => {
     renderOrders(orders);
-    setSubmitMode(document.getElementById("submitBtn").dataset.mode || "add");
+    const mode = document.getElementById("submitBtn").dataset.mode || "add";
+    const editingOrder = mode === "update"
+        ? orders.find(order => order.orderID === document.getElementById("order-id").value)
+        : null;
+    setSubmitMode(mode, editingOrder?.orderStatus);
 });

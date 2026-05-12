@@ -160,7 +160,9 @@
     "Export to CSV": "Export to CSV",
     "Total Revenue": "Total Revenue: {amount}",
     "Order ID already exists. Please use a unique ID.": "Order ID already exists. Please use a unique ID.",
-    "No orders found": "No orders found"
+    "No orders found": "No orders found",
+    "New orders must start as Pending.": "New orders must start as Pending.",
+    "Order {id} cannot move from {from} to {to}.": "Order {id} cannot move from {from} to {to}."
   },
   "expenses": {
     "documentTitle": "Expenses - BizTrack",
