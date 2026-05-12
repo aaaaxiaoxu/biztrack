@@ -22,8 +22,10 @@ function closeForm() {
 let transactions = [];
 let serialNumberCounter;
 const core = window.BizTrackCore;
+const tables = window.BizTrackTables;
 const expensesI18n = window.BizTrackI18n?.useExpensesI18n();
 const expensesCommonI18n = window.BizTrackI18n?.useCommonI18n();
+let transactionTable;
 const defaultTransactions = [
     {
         trID: 1,
@@ -129,67 +131,44 @@ function newTransaction(event) {
 
 
 function renderTransactions(transactions) {
-    const transactionTableBody = document.getElementById("tableBody");
-    transactionTableBody.replaceChildren();
-
-    const transactionToRender = transactions;
-
-    transactionToRender.forEach(transaction => {
-        const transactionRow = document.createElement("tr");
-        transactionRow.className = "transaction-row";
-
-        transactionRow.dataset.trID = transaction.trID;
-        transactionRow.dataset.trDate = transaction.trDate;
-        transactionRow.dataset.trCategory = transaction.trCategory;
-        transactionRow.dataset.trAmount = transaction.trAmount;
-        transactionRow.dataset.trNotes = transaction.trNotes;
-
-        const formattedAmount = typeof transaction.trAmount === 'number' ? `$${transaction.trAmount.toFixed(2)}` : '';
-
-        appendCells(transactionRow, [
-            transaction.trID,
-            transaction.trDate,
-            transaction.trCategory,
-        ]);
-        const amountCell = document.createElement("td");
-        amountCell.className = "tr-amount";
-        amountCell.textContent = formattedAmount;
-        transactionRow.appendChild(amountCell);
-        appendCells(transactionRow, [transaction.trNotes]);
-        transactionRow.appendChild(createActionCell(transaction.trID));
-        transactionTableBody.appendChild(transactionRow);
+  transactionTable = tables.createOrUpdateTable(transactionTable, "#finance-table", {
+    data: transactions,
+    columns: buildTransactionColumns(),
+    placeholder: expenseT("No expenses found"),
   });
+
+  performSearch();
   displayExpenses();
 }
 
-function appendCells(row, values) {
-    values.forEach((value) => {
-        const cell = document.createElement("td");
-        cell.textContent = value;
-        row.appendChild(cell);
-    });
-}
-
-function createActionCell(trID) {
-    const actionCell = document.createElement("td");
-    actionCell.className = "action";
-
-    const editButton = document.createElement("button");
-    editButton.type = "button";
-    editButton.className = "icon-button edit-icon";
-    editButton.setAttribute("aria-label", expenseT("Edit expense", { id: trID }));
-    editButton.innerHTML = '<i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>';
-    editButton.addEventListener("click", () => editRow(trID));
-
-    const deleteButton = document.createElement("button");
-    deleteButton.type = "button";
-    deleteButton.className = "icon-button delete-icon";
-    deleteButton.setAttribute("aria-label", expenseT("Delete expense", { id: trID }));
-    deleteButton.innerHTML = '<i class="fas fa-trash-alt" aria-hidden="true"></i>';
-    deleteButton.addEventListener("click", () => deleteTransaction(trID));
-
-    actionCell.append(editButton, deleteButton);
-    return actionCell;
+function buildTransactionColumns() {
+    return [
+        {
+            title: expenseT("S/N"),
+            field: "trID",
+            hozAlign: "right",
+            sorter: "number",
+            width: 90,
+        },
+        tables.plainTextColumn(expenseT("Date"), "trDate", { sorter: "date" }),
+        tables.plainTextColumn(expenseT("Expense Category"), "trCategory"),
+        {
+            title: expenseT("Amount"),
+            field: "trAmount",
+            cssClass: "tr-amount",
+            formatter: tables.currencyFormatter,
+            hozAlign: "right",
+            sorter: "number",
+        },
+        tables.plainTextColumn(expenseT("Notes"), "trNotes"),
+        tables.actionColumn({
+            title: expenseT("Action"),
+            editLabel: (transaction) => expenseT("Edit expense", { id: transaction.trID }),
+            deleteLabel: (transaction) => expenseT("Delete expense", { id: transaction.trID }),
+            onEdit: (transaction) => editRow(transaction.trID),
+            onDelete: (transaction) => deleteTransaction(transaction.trID),
+        }),
+    ];
 }
 
 function displayExpenses() {
@@ -258,48 +237,19 @@ function deleteTransaction(trID) {
 }
 
 function sortTable(column) {
-    const tbody = document.getElementById("tableBody");
-    const rows = Array.from(tbody.querySelectorAll("tr"));
-
-    const isNumeric = column === "trID" || column === "trAmount";
-
-    const sortedRows = rows.sort((a, b) => {
-        const aValue = isNumeric ? parseFloat(a.dataset[column]) : a.dataset[column];
-        const bValue = isNumeric ? parseFloat(b.dataset[column]) : b.dataset[column];
-
-        if (typeof aValue === "string" && typeof bValue === "string") {
-            // Case-insensitive string comparison for text columns
-            return aValue.localeCompare(bValue, undefined, { sensitivity: "base" });
-        } else {
-            return aValue - bValue;
-        }
-    });
-
-    rows.forEach(row => tbody.removeChild(row));
-
-    sortedRows.forEach(row => tbody.appendChild(row));
+    transactionTable?.setSort(column, "asc");
 }
 
-document.getElementById("searchInput").addEventListener("keyup", function(event) {
-    if (event.key === "Enter") {
-        performSearch();
-    }
-});
-
+tables.bindGlobalSearch("searchInput", () => transactionTable);
 
 function performSearch() {
-    const searchInput = document.getElementById("searchInput").value.toLowerCase();
-    const rows = document.querySelectorAll(".transaction-row");
-
-    rows.forEach(row => {
-        const visible = row.innerText.toLowerCase().includes(searchInput);
-        row.style.display = visible ? "table-row" : "none";
-    });
+    tables.applyGlobalSearch(transactionTable, document.getElementById("searchInput").value);
 }
 
 
 function exportToCSV() {
-    const transactionsToExport = transactions.map(transaction => {
+    const activeTransactions = tables.getActiveData(transactionTable, transactions);
+    const transactionsToExport = activeTransactions.map(transaction => {
         return {
             trID: transaction.trID,
             trDate: transaction.trDate,

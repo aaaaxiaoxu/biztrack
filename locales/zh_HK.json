@@ -135,7 +135,8 @@
     "Products - BizTrack": "產品 - BizTrack",
     "Add Product": "新增產品",
     "Download CSV": "下載 CSV",
-    "Product ID already exists. Please use a unique ID.": "產品編號已存在，請使用唯一編號。"
+    "Product ID already exists. Please use a unique ID.": "產品編號已存在，請使用唯一編號。",
+    "No products found": "暫無產品"
   },
   "orders": {
     "documentTitle": "訂單 - BizTrack",
@@ -148,7 +149,8 @@
     "Add Order": "新增訂單",
     "Export to CSV": "匯出 CSV",
     "Total Revenue": "總收入：{amount}",
-    "Order ID already exists. Please use a unique ID.": "訂單編號已存在，請使用唯一編號。"
+    "Order ID already exists. Please use a unique ID.": "訂單編號已存在，請使用唯一編號。",
+    "No orders found": "暫無訂單"
   },
   "expenses": {
     "documentTitle": "支出 - BizTrack",
@@ -159,7 +161,8 @@
     "Expenses - BizTrack": "支出 - BizTrack",
     "Add Expense": "新增支出",
     "Export to CSV": "匯出 CSV",
-    "Total Expenses": "總支出：{amount}"
+    "Total Expenses": "總支出：{amount}",
+    "No expenses found": "暫無支出"
   },
   "help": {
     "documentTitle": "幫助 - BizTrack",

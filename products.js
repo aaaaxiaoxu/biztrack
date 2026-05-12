@@ -21,8 +21,10 @@ function closeForm() {
 
 let products = [];
 const core = window.BizTrackCore;
+const tables = window.BizTrackTables;
 const productsI18n = window.BizTrackI18n?.useProductsI18n();
 const productsCommonI18n = window.BizTrackI18n?.useCommonI18n();
+let productTable;
 const defaultProducts = [
   {
     prodID: "PD001",
@@ -134,63 +136,42 @@ function newProduct(event) {
 
 
 function renderProducts(products) {
-  const prodTableBody = document.getElementById("tableBody");
-  prodTableBody.replaceChildren();
-
-  const prodToRender = products;
-
-  prodToRender.forEach(product => {
-      const prodRow = document.createElement("tr");
-      prodRow.className = "product-row";
-
-      prodRow.dataset.prodID = product.prodID;
-      prodRow.dataset.prodName = product.prodName;
-      prodRow.dataset.prodDesc = product.prodDesc;
-      prodRow.dataset.prodCat = product.prodCat;
-      prodRow.dataset.prodPrice = product.prodPrice;
-      prodRow.dataset.prodSold = product.prodSold;
-
-      appendCells(prodRow, [
-        product.prodID,
-        product.prodName,
-        product.prodDesc,
-        product.prodCat,
-        `$${core.toFiniteNumber(product.prodPrice).toFixed(2)}`,
-        product.prodSold,
-      ]);
-      prodRow.appendChild(createActionCell(product.prodID));
-      prodTableBody.appendChild(prodRow);
+  productTable = tables.createOrUpdateTable(productTable, "#product-table", {
+    data: products,
+    columns: buildProductColumns(),
+    placeholder: productT("No products found"),
   });
+
+  performSearch();
 }
 
-function appendCells(row, values) {
-  values.forEach((value) => {
-    const cell = document.createElement("td");
-    cell.textContent = value;
-    row.appendChild(cell);
-  });
-}
-
-function createActionCell(prodID) {
-  const actionCell = document.createElement("td");
-  actionCell.className = "action";
-
-  const editButton = document.createElement("button");
-  editButton.type = "button";
-  editButton.className = "icon-button edit-icon";
-  editButton.setAttribute("aria-label", productT("Edit product", { id: prodID }));
-  editButton.innerHTML = '<i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>';
-  editButton.addEventListener("click", () => editRow(prodID));
-
-  const deleteButton = document.createElement("button");
-  deleteButton.type = "button";
-  deleteButton.className = "icon-button delete-icon";
-  deleteButton.setAttribute("aria-label", productT("Delete product", { id: prodID }));
-  deleteButton.innerHTML = '<i class="fas fa-trash-alt" aria-hidden="true"></i>';
-  deleteButton.addEventListener("click", () => deleteProduct(prodID));
-
-  actionCell.append(editButton, deleteButton);
-  return actionCell;
+function buildProductColumns() {
+  return [
+    tables.plainTextColumn(productT("Product ID"), "prodID"),
+    tables.plainTextColumn(productT("Product Name"), "prodName"),
+    tables.plainTextColumn(productT("Description"), "prodDesc"),
+    tables.plainTextColumn(productT("Category"), "prodCat"),
+    {
+      title: productT("Price"),
+      field: "prodPrice",
+      formatter: tables.currencyFormatter,
+      hozAlign: "right",
+      sorter: "number",
+    },
+    {
+      title: productT("Units Sold"),
+      field: "prodSold",
+      hozAlign: "right",
+      sorter: "number",
+    },
+    tables.actionColumn({
+      title: productT("Action"),
+      editLabel: (product) => productT("Edit product", { id: product.prodID }),
+      deleteLabel: (product) => productT("Delete product", { id: product.prodID }),
+      onEdit: (product) => editRow(product.prodID),
+      onDelete: (product) => deleteProduct(product.prodID),
+    }),
+  ];
 }
 
 function editRow(prodID) {
@@ -263,47 +244,19 @@ function isDuplicateID(prodID, currentID) {
 }
 
 function sortTable(column) {
-    const tbody = document.getElementById("tableBody");
-    const rows = Array.from(tbody.querySelectorAll("tr"));
-
-    const isNumeric = column === "prodPrice" || column === "prodSold";
-
-    const sortedRows = rows.sort((a, b) => {
-        const aValue = isNumeric ? parseFloat(a.dataset[column]) : a.dataset[column];
-        const bValue = isNumeric ? parseFloat(b.dataset[column]) : b.dataset[column];
-
-        if (typeof aValue === "string" && typeof bValue === "string") {
-            return aValue.localeCompare(bValue, undefined, { sensitivity: "base" });
-        } else {
-            return aValue - bValue;
-        }
-    });
-
-    rows.forEach(row => tbody.removeChild(row));
-
-    sortedRows.forEach(row => tbody.appendChild(row));
+  productTable?.setSort(column, "asc");
 }
 
-document.getElementById("searchInput").addEventListener("keyup", function(event) {
-    if (event.key === "Enter") {
-        performSearch();
-    }
-});
-
+tables.bindGlobalSearch("searchInput", () => productTable);
 
 function performSearch() {
-    const searchInput = document.getElementById("searchInput").value.toLowerCase();
-    const rows = document.querySelectorAll(".product-row");
-
-    rows.forEach(row => {
-        const visible = row.innerText.toLowerCase().includes(searchInput);
-        row.style.display = visible ? "table-row" : "none";
-    });
+  tables.applyGlobalSearch(productTable, document.getElementById("searchInput").value);
 }
 
 
 function exportToCSV() {
-  const productsToExport = products.map(product => {
+  const activeProducts = tables.getActiveData(productTable, products);
+  const productsToExport = activeProducts.map(product => {
       return {
         prodID: product.prodID,
         prodName: product.prodName,

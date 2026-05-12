@@ -18,7 +18,7 @@ Please refer to --- https://biztrack-6tl.pages.dev/.
 - **Order Tracking**: View order details and status and manage the entire order fulfillment process from processing to delivery.
 - **Expenses Management**: Log expenses, categorize them and maintain a clear overview of all financial transactions.
 - **Insightful Dashboard**: Gives a quick snapshot of the business with a dashboard that displays summary stats such as revenue, expenses, the number of orders, and current balance.
-- **Search and Sort Entries**: Sort through the product, order and expense tables using the column headers.
+- **Search and Sort Entries**: Use Tabulator-powered product, order, and expense tables with built-in sorting, pagination, and filtering.
 - **Analytics**: Explore sales by product category and track expenses with visually appealing charts
 - **Export to CSV**: Download all data tables into CSV seamlessly.
 - **Internationalization**: Switch the interface between English and Chinese.
@@ -53,6 +53,7 @@ This project represents my growth, determination, and love for coding. I hope yo
 - HTML
 - CSS
 - JavaScript
+- Tabulator
 
 ## 🤝 Acknowledgments
 

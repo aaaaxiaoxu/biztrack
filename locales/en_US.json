@@ -135,7 +135,8 @@
     "Products - BizTrack": "Products - BizTrack",
     "Add Product": "Add Product",
     "Download CSV": "Download CSV",
-    "Product ID already exists. Please use a unique ID.": "Product ID already exists. Please use a unique ID."
+    "Product ID already exists. Please use a unique ID.": "Product ID already exists. Please use a unique ID.",
+    "No products found": "No products found"
   },
   "orders": {
     "documentTitle": "Orders - BizTrack",
@@ -148,7 +149,8 @@
     "Add Order": "Add Order",
     "Export to CSV": "Export to CSV",
     "Total Revenue": "Total Revenue: {amount}",
-    "Order ID already exists. Please use a unique ID.": "Order ID already exists. Please use a unique ID."
+    "Order ID already exists. Please use a unique ID.": "Order ID already exists. Please use a unique ID.",
+    "No orders found": "No orders found"
   },
   "expenses": {
     "documentTitle": "Expenses - BizTrack",
@@ -159,7 +161,8 @@
     "Expenses - BizTrack": "Expenses - BizTrack",
     "Add Expense": "Add Expense",
     "Export to CSV": "Export to CSV",
-    "Total Expenses": "Total Expenses: {amount}"
+    "Total Expenses": "Total Expenses: {amount}",
+    "No expenses found": "No expenses found"
   },
   "help": {
     "documentTitle": "Help - BizTrack",

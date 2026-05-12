@@ -20,8 +20,10 @@ function closeForm() {
 
 let orders = [];
 const core = window.BizTrackCore;
+const tables = window.BizTrackTables;
 const ordersI18n = window.BizTrackI18n?.useOrdersI18n();
 const ordersCommonI18n = window.BizTrackI18n?.useCommonI18n();
+let orderTable;
 const defaultOrders = [
     {
         orderID: "1001",
@@ -158,91 +160,80 @@ function newOrder(event) {
 
 
 function renderOrders(orders) {
-    const orderTableBody = document.getElementById("tableBody");
-    orderTableBody.replaceChildren();
+  orderTable = tables.createOrUpdateTable(orderTable, "#order-table", {
+    data: orders,
+    columns: buildOrderColumns(),
+    placeholder: orderT("No orders found"),
+  });
 
-    const orderToRender = orders;
+  performSearch();
+  displayRevenue();
+}
+
+function buildOrderColumns() {
     const statusMap = {
         "Pending": "pending",
         "Processing": "processing",
         "Shipped": "shipped",
         "Delivered": "delivered"
-    }
+    };
 
-    orderToRender.forEach(order => {
-      const orderRow = document.createElement("tr");
-      orderRow.className = "order-row";
-
-      orderRow.dataset.orderID = order.orderID;
-      orderRow.dataset.orderDate = order.orderDate;
-      orderRow.dataset.itemName = order.itemName;
-      orderRow.dataset.itemPrice = order.itemPrice;
-      orderRow.dataset.qtyBought = order.qtyBought;
-      orderRow.dataset.shipping = order.shipping;
-      orderRow.dataset.taxes = order.taxes;
-      orderRow.dataset.orderTotal = order.orderTotal;
-      orderRow.dataset.orderStatus = order.orderStatus;
-
-      const formattedPrice = typeof order.itemPrice === 'number' ? `$${order.itemPrice.toFixed(2)}` : '';
-      const formattedShipping = typeof order.shipping === 'number' ? `$${order.shipping.toFixed(2)}` : '';
-      const formattedTaxes = typeof order.taxes === 'number' ? `$${order.taxes.toFixed(2)}` : '';
-      const formattedTotal = typeof order.orderTotal === 'number' ? `$${order.orderTotal.toFixed(2)}` : '';
-
-      appendCells(orderRow, [
-        order.orderID,
-        order.orderDate,
-        order.itemName,
-        formattedPrice,
-        order.qtyBought,
-        formattedShipping,
-        formattedTaxes,
-      ]);
-      const totalCell = document.createElement("td");
-      totalCell.className = "order-total";
-      totalCell.textContent = formattedTotal;
-      orderRow.appendChild(totalCell);
-      const statusCell = document.createElement("td");
-      const status = document.createElement("div");
-      status.className = `status ${statusMap[order.orderStatus] || ""}`;
-      const statusText = document.createElement("span");
-      statusText.textContent = orderT(order.orderStatus);
-      status.appendChild(statusText);
-      statusCell.appendChild(status);
-      orderRow.appendChild(statusCell);
-      orderRow.appendChild(createActionCell(order.orderID));
-      orderTableBody.appendChild(orderRow);
-  });
-  displayRevenue();
-}
-
-function appendCells(row, values) {
-  values.forEach((value) => {
-    const cell = document.createElement("td");
-    cell.textContent = value;
-    row.appendChild(cell);
-  });
-}
-
-function createActionCell(orderID) {
-  const actionCell = document.createElement("td");
-  actionCell.className = "action";
-
-  const editButton = document.createElement("button");
-  editButton.type = "button";
-  editButton.className = "icon-button edit-icon";
-  editButton.setAttribute("aria-label", orderT("Edit order", { id: orderID }));
-  editButton.innerHTML = '<i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>';
-  editButton.addEventListener("click", () => editRow(orderID));
-
-  const deleteButton = document.createElement("button");
-  deleteButton.type = "button";
-  deleteButton.className = "icon-button delete-icon";
-  deleteButton.setAttribute("aria-label", orderT("Delete order", { id: orderID }));
-  deleteButton.innerHTML = '<i class="fas fa-trash-alt" aria-hidden="true"></i>';
-  deleteButton.addEventListener("click", () => deleteOrder(orderID));
-
-  actionCell.append(editButton, deleteButton);
-  return actionCell;
+    return [
+        tables.plainTextColumn(orderT("Order ID"), "orderID"),
+        tables.plainTextColumn(orderT("Order Date"), "orderDate", { sorter: "date" }),
+        tables.plainTextColumn(orderT("Item Name"), "itemName"),
+        {
+            title: orderT("Item Price"),
+            field: "itemPrice",
+            formatter: tables.currencyFormatter,
+            hozAlign: "right",
+            sorter: "number",
+        },
+        {
+            title: orderT("Qty"),
+            field: "qtyBought",
+            hozAlign: "right",
+            sorter: "number",
+        },
+        {
+            title: orderT("Shipping Fee"),
+            field: "shipping",
+            formatter: tables.currencyFormatter,
+            hozAlign: "right",
+            sorter: "number",
+        },
+        {
+            title: orderT("Taxes"),
+            field: "taxes",
+            formatter: tables.currencyFormatter,
+            hozAlign: "right",
+            sorter: "number",
+        },
+        {
+            title: orderT("Order Total"),
+            field: "orderTotal",
+            cssClass: "order-total",
+            formatter: tables.currencyFormatter,
+            hozAlign: "right",
+            sorter: "number",
+        },
+        {
+            title: orderT("Order Status"),
+            field: "orderStatus",
+            formatter(cell) {
+                const status = cell.getValue();
+                const className = statusMap[status] || "";
+                return `<div class="status ${className}"><span>${tables.escapeHtml(orderT(status))}</span></div>`;
+            },
+        },
+        tables.actionColumn({
+            title: orderT("Action"),
+            editLabel: (order) => orderT("Edit order", { id: order.orderID }),
+            deleteLabel: (order) => orderT("Delete order", { id: order.orderID }),
+            onEdit: (order) => editRow(order.orderID),
+            onDelete: (order) => deleteOrder(order.orderID),
+        }),
+    ];
 }
 
 function displayRevenue() {
@@ -336,48 +327,19 @@ function isDuplicateID(orderID, currentID) {
 }
 
 function sortTable(column) {
-    const tbody = document.getElementById("tableBody");
-    const rows = Array.from(tbody.querySelectorAll("tr"));
-
-    const isNumeric = column === "itemPrice" || column === "qtyBought" || column === "shipping"|| column === "taxes"|| column === "orderTotal";
-
-    const sortedRows = rows.sort((a, b) => {
-        const aValue = isNumeric ? parseFloat(a.dataset[column]) : a.dataset[column];
-        const bValue = isNumeric ? parseFloat(b.dataset[column]) : b.dataset[column];
-
-        if (typeof aValue === "string" && typeof bValue === "string") {
-            // Case-insensitive string comparison for text columns
-            return aValue.localeCompare(bValue, undefined, { sensitivity: "base" });
-        } else {
-            return aValue - bValue;
-        }
-    });
-
-    rows.forEach(row => tbody.removeChild(row));
-
-    sortedRows.forEach(row => tbody.appendChild(row));
+    orderTable?.setSort(column, "asc");
 }
 
-document.getElementById("searchInput").addEventListener("keyup", function(event) {
-    if (event.key === "Enter") {
-        performSearch();
-    }
-});
-
+tables.bindGlobalSearch("searchInput", () => orderTable);
 
 function performSearch() {
-    const searchInput = document.getElementById("searchInput").value.toLowerCase();
-    const rows = document.querySelectorAll(".order-row");
-
-    rows.forEach(row => {
-        const visible = row.innerText.toLowerCase().includes(searchInput);
-        row.style.display = visible ? "table-row" : "none";
-    });
+    tables.applyGlobalSearch(orderTable, document.getElementById("searchInput").value);
 }
 
 
 function exportToCSV() {
-    const ordersToExport = orders.map(order => {
+    const activeOrders = tables.getActiveData(orderTable, orders);
+    const ordersToExport = activeOrders.map(order => {
         return {
             orderID: order.orderID,
             orderDate: order.orderDate,

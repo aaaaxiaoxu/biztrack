@@ -7,6 +7,7 @@
     <meta property="og:description" content="A project born out of real small business challenges, now simplifying product, order, and finance management."/>
     <meta property="og:image:secure_url" content="https://i.imgur.com/0O47fVi.jpg"/>
     <meta property="og:url" content="https://sumusa.github.io/biztrack/"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabulator-tables@6.3.1/dist/css/tabulator.min.css"/>
     <link rel="stylesheet" href="/styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
@@ -154,26 +155,7 @@
                 </form>
             </div>
             <div class="table-container">
-                <table id="product-table">
-                    <thead>
-                        <tr>
-                            <th onclick="sortTable('prodID')">{{ t("common.Product ID") }}</th>
-                            <th onclick="sortTable('prodName')">{{ t("common.Product Name") }}</th>
-                            <th onclick="sortTable('prodDesc')">{{ t("common.Description") }}</th>
-                            <th onclick="sortTable('prodCat')">{{ t("common.Category") }}</th>
-                            <th onclick="sortTable('prodPrice')">{{ t("common.Price") }}</th>
-                            <th onclick="sortTable('prodSold')">{{ t("common.Units Sold") }}</th>
-                            <th>{{ t("common.Action") }}</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                    </tbody>
-                    <!-- <tfoot>
-                        <tr>
-                            <td colspan="11"><a href="#">View more orders</a></td>
-                        </tr>
-                    </tfoot> -->
-                </table>
+                <div id="product-table" class="biztrack-data-table"></div>
             </div>
         </div>
     </div>
@@ -181,6 +163,8 @@
     <script src="/app-core.js"></script>
     <script src="/i18n.js"></script>
     <script src="/common.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
+    <script src="/data-table.js"></script>
 
     <script src="/products.js"></script>
 </body>

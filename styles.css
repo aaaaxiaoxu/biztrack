@@ -428,12 +428,69 @@ label {
     max-width: 100%;
     overflow-x: auto;
 }
-.table-container button {
-    color: var(--brown-color);
-    background: none;
+.biztrack-data-table {
+    min-width: 720px;
+}
+.biztrack-data-table .tabulator {
+    border: 1px solid #d8dde3;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.biztrack-data-table .tabulator-header,
+.biztrack-data-table .tabulator-col {
+    background: #f7f8fa;
+    color: var(--black-color);
+}
+.biztrack-data-table .tabulator-col {
+    border-right: 1px solid #d8dde3;
+}
+.biztrack-data-table .tabulator-row {
+    background: #f7f8fa;
+}
+.biztrack-data-table .tabulator-row.tabulator-row-even {
+    background: #ffffff;
+}
+.biztrack-data-table .tabulator-row .tabulator-cell {
+    border-right: 1px solid #e1e5ea;
+    color: var(--black-color);
+    padding: 12px 10px;
+}
+.biztrack-data-table .tabulator-footer {
+    background: #ffffff;
+    border-top: 1px solid #d8dde3;
+}
+.biztrack-data-table .tabulator-page {
+    background: #ffffff;
+    border: 1px solid #d8dde3;
+    border-radius: 5px;
+    color: var(--black-color);
     cursor: pointer;
-    font-size: 0.9rem;
-    text-decoration: underline;
+    margin: 0 2px;
+    padding: 0.35rem 0.55rem;
+}
+.biztrack-data-table .tabulator-page.active {
+    background: var(--green-color);
+    color: var(--white-color);
+}
+.biztrack-data-table .tabulator-group {
+    background: #eef4f7;
+    border-bottom: 1px solid #d8dde3;
+    color: var(--black-color);
+    font-weight: 700;
+}
+.tabulator-actions {
+    align-items: center;
+    display: flex;
+    gap: 0.35rem;
+    justify-content: center;
+}
+.table-total {
+    background: #313131;
+    border-radius: 0 0 8px 8px;
+    color: var(--orange-color);
+    font-size: 15px;
+    font-weight: 700;
+    padding: 0.95rem 1rem;
 }
 table {
     width: 100%;
@@ -483,6 +540,9 @@ tfoot td {
 }
 #total-revenue {
     color: #33d8a4;
+}
+#total-expenses {
+    color: var(--orange-color);
 }
 .tr-amount {
     color: #e8754c;
