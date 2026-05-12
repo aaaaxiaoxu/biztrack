@@ -124,7 +124,8 @@
     "Expenses": "Expenses",
     "Sales by Product Category": "Sales by Product Category",
     "Total Sales": "Total Sales",
-    "Total Sales ($)": "Total Sales ($)"
+    "Total Sales ($)": "Total Sales ($)",
+    "revenueVsExpensesTrend": "Revenue vs Expenses Trend"
   },
   "products": {
     "documentTitle": "Products - BizTrack",

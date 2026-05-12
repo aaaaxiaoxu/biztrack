@@ -9,8 +9,149 @@ function closeSidebar() {
   document.getElementById('sidebar').style.display = 'none';
 }
 
-let barChart;
-let donutChart;
+const core = window.BizTrackCore;
+let salesChart;
+let expensesChart;
+let trendChart;
+
+const defaultProducts = [
+  {
+    prodID: "PD001",
+    prodName: "Baseball caps",
+    prodDesc: "Peace embroidered cap",
+    prodCat: "Hats",
+    prodPrice: 25.00,
+    prodSold: 20
+  },
+  {
+    prodID: "PD002",
+    prodName: "Water bottles",
+    prodDesc: "Floral lotus printed bottle",
+    prodCat: "Drinkware",
+    prodPrice: 48.50,
+    prodSold: 10
+  },
+  {
+    prodID: "PD003",
+    prodName: "Sweatshirts",
+    prodDesc: "Palestine sweater",
+    prodCat: "Clothing",
+    prodPrice: 17.50,
+    prodSold: 70
+  },
+  {
+    prodID: "PD004",
+    prodName: "Posters",
+    prodDesc: "Vibes printed poster",
+    prodCat: "Home decor",
+    prodPrice: 12.00,
+    prodSold: 60
+  },
+  {
+    prodID: "PD005",
+    prodName: "Pillow cases",
+    prodDesc: "Morrocan print pillow case",
+    prodCat: "Accessories",
+    prodPrice: 17.00,
+    prodSold: 40
+  },
+];
+
+const defaultExpenses = [
+  {
+    trID: 1,
+    trDate: "2024-01-05",
+    trCategory: "Rent",
+    trAmount: 100.00,
+    trNotes: "January Rent"
+  },
+  {
+    trID: 2,
+    trDate: "2024-01-15",
+    trCategory: "Order Fulfillment",
+    trAmount: 35.00,
+    trNotes: "Order #1005"
+  },
+  {
+    trID: 3,
+    trDate: "2024-01-08",
+    trCategory: "Utilities",
+    trAmount: 120.00,
+    trNotes: "Internet"
+  },
+  {
+    trID: 4,
+    trDate: "2024-02-05",
+    trCategory: "Supplies",
+    trAmount: 180.00,
+    trNotes: "Embroidery Machine"
+  },
+  {
+    trID: 5,
+    trDate: "2024-01-25",
+    trCategory: "Miscellaneous",
+    trAmount: 20.00,
+    trNotes: "Pizza"
+  },
+];
+
+const defaultOrders = [
+  {
+    orderID: "1001",
+    orderDate: "2024-01-05",
+    itemName: "Baseball caps",
+    itemPrice: 25.00,
+    qtyBought: 2,
+    shipping: 2.50,
+    taxes: 9.00,
+    orderTotal: 61.50,
+    orderStatus: "Pending"
+  },
+  {
+    orderID: "1002",
+    orderDate: "2024-03-05",
+    itemName: "Water bottles",
+    itemPrice: 17.00,
+    qtyBought: 3,
+    shipping: 3.50,
+    taxes: 6.00,
+    orderTotal: 60.50,
+    orderStatus: "Processing"
+  },
+  {
+    orderID: "1003",
+    orderDate: "2024-02-05",
+    itemName: "Tote bags",
+    itemPrice: 20.00,
+    qtyBought: 4,
+    shipping: 2.50,
+    taxes: 2.00,
+    orderTotal: 84.50,
+    orderStatus: "Shipped"
+  },
+  {
+    orderID: "1004",
+    orderDate: "2023-01-05",
+    itemName: "Canvas prints",
+    itemPrice: 55.00,
+    qtyBought: 1,
+    shipping: 2.50,
+    taxes: 19.00,
+    orderTotal: 76.50,
+    orderStatus: "Delivered"
+  },
+  {
+    orderID: "1005",
+    orderDate: "2024-01-15",
+    itemName: "Beanies",
+    itemPrice: 15.00,
+    qtyBought: 2,
+    shipping: 3.90,
+    taxes: 4.00,
+    orderTotal: 37.90,
+    orderStatus: "Pending"
+  },
+];
 
 function dashboardT(key, params) {
   return window.BizTrackI18n?.useDashboardI18n().t(key, params)
@@ -18,131 +159,43 @@ function dashboardT(key, params) {
     || key;
 }
 
-function renderDashboardMetrics() {
-  const core = window.BizTrackCore;
-  const defaultExpenses = [
-    {
-      trID: 1,
-      trDate: "2024-01-05",
-      trCategory: "Rent",
-      trAmount: 100.00,
-      trNotes: "January Rent"
-  },
-  {
-      trID: 2,
-      trDate: "2024-01-15",
-      trCategory: "Order Fulfillment",
-      trAmount: 35.00,
-      trNotes: "Order #1005"
-  },
-  {
-      trID: 3,
-      trDate: "2024-01-08",
-      trCategory: "Utilities",
-      trAmount: 120.00,
-      trNotes: "Internet"
-  },
-  {
-      trID: 4,
-      trDate: "2024-02-05",
-      trCategory: "Supplies",
-      trAmount: 180.00,
-      trNotes: "Embroidery Machine"
-  },
-  {
-      trID: 5,
-      trDate: "2024-01-25",
-      trCategory: "Miscellaneous",
-      trAmount: 20.00,
-      trNotes: "Pizza"
-  },
-  ];
-  const defaultRevenues = [
-    {
-      orderID: "1001",
-      orderDate: "2024-01-05",
-      itemName: "Baseball caps",
-      itemPrice: 25.00,
-      qtyBought: 2,
-      shipping: 2.50,
-      taxes: 9.00,
-      orderTotal: 61.50,
-      orderStatus: "Pending"
-  },
-  {
-      orderID: "1002",
-      orderDate: "2024-03-05",
-      itemName: "Water bottles",
-      itemPrice: 17.00,
-      qtyBought: 3,
-      shipping: 3.50,
-      taxes: 6.00,
-      orderTotal: 60.50,
-      orderStatus: "Processing"
-  },
-  {
-      orderID: "1003",
-      orderDate: "2024-02-05",
-      itemName: "Tote bags",
-      itemPrice: 20.00,
-      qtyBought: 4,
-      shipping: 2.50,
-      taxes: 2.00,
-      orderTotal: 84.50,
-      orderStatus: "Shipped"
-  },
-  {
-      orderID: "1004",
-      orderDate: "2023-01-05",
-      itemName: "Canvas prints",
-      itemPrice: 55.00,
-      qtyBought: 1,
-      shipping: 2.50,
-      taxes: 19.00,
-      orderTotal: 76.50,
-      orderStatus: "Delivered"
-  },
-  {
-      orderID: "1005",
-      orderDate: "2024-01-15",
-      itemName: "Beanies",
-      itemPrice: 15.00,
-      qtyBought: 2,
-      shipping: 3.90,
-      taxes: 4.00,
-      orderTotal: 37.90,
-      orderStatus: "Pending"
-  },
-  ];
-  const expenses = core.parseStoredArray(localStorage, 'bizTrackTransactions', defaultExpenses);
-  const revenues = core.parseStoredArray(localStorage, 'bizTrackOrders', defaultRevenues);
-
-  const totalExpenses = calculateExpTotal(expenses);
-  const totalRevenues = calculateRevTotal(revenues);
-  const totalBalance = totalRevenues - totalExpenses;
-  const numOrders = revenues.length;
-
-  const revDiv = document.getElementById('rev-amount');
-  const expDiv = document.getElementById('exp-amount');
-  const balDiv = document.getElementById('balance');
-  const ordDiv = document.getElementById('num-orders');
-
-  renderMetric(revDiv, "Revenue", `$${totalRevenues.toFixed(2)}`);
-  renderMetric(expDiv, "Expenses", `$${totalExpenses.toFixed(2)}`);
-  renderMetric(balDiv, "Balance", `$${totalBalance.toFixed(2)}`);
-  renderMetric(ordDiv, "Orders", numOrders);
+function getDashboardData() {
+  return {
+    products: core.parseStoredArray(localStorage, "bizTrackProducts", defaultProducts),
+    expenses: core.parseStoredArray(localStorage, "bizTrackTransactions", defaultExpenses),
+    orders: core.parseStoredArray(localStorage, "bizTrackOrders", defaultOrders),
+  };
 }
 
-window.onload = renderDashboardMetrics;
+function renderDashboard() {
+  const data = getDashboardData();
+  renderDashboardMetrics(data);
+  initializeChart(data);
+}
+
+function renderDashboardMetrics(data = getDashboardData()) {
+  const totalExpenses = calculateExpTotal(data.expenses);
+  const totalRevenues = calculateRevTotal(data.orders);
+  const totalBalance = totalRevenues - totalExpenses;
+  const numOrders = data.orders.length;
+
+  renderMetric(document.getElementById('rev-amount'), "Revenue", formatCurrency(totalRevenues));
+  renderMetric(document.getElementById('exp-amount'), "Expenses", formatCurrency(totalExpenses));
+  renderMetric(document.getElementById('balance'), "Balance", formatCurrency(totalBalance));
+  renderMetric(document.getElementById('num-orders'), "Orders", numOrders);
+}
 
 function calculateExpTotal(transactions) {
-  return window.BizTrackCore.sumBy(transactions, "trAmount");
+  return core.sumBy(transactions, "trAmount");
 }
+
 function calculateRevTotal(orders) {
-  return window.BizTrackCore.sumBy(orders, "orderTotal");
+  return core.sumBy(orders, "orderTotal");
 }
 
 function renderMetric(container, title, value) {
+  if (!container) return;
+
   container.replaceChildren();
   const titleSpan = document.createElement("span");
   titleSpan.className = "title";
@@ -153,254 +206,199 @@ function renderMetric(container, title, value) {
   container.append(titleSpan, valueSpan);
 }
 
-
 // ---------- CHARTS ----------
 
-// BAR CHART
-
 function calculateCategorySales(products) {
-  const categorySales = {};
-
-  products.forEach(product => {
+  return products.reduce((categorySales, product) => {
     const category = product.prodCat;
-
-    if (!categorySales[category]) {
-      categorySales[category] = 0;
-    }
-
-    categorySales[category] += product.prodPrice * product.prodSold;
-  });
-
-  return categorySales;
+    categorySales[category] = (categorySales[category] || 0)
+      + core.toFiniteNumber(product.prodPrice) * core.toFiniteNumber(product.prodSold);
+    return categorySales;
+  }, {});
 }
 
-
-function initializeChart() {
-  const core = window.BizTrackCore;
-  const items = core.parseStoredArray(localStorage, 'bizTrackProducts', [
-    {
-      prodID: "PD001",
-      prodName: "Baseball caps",
-      prodDesc: "Peace embroidered cap",
-      prodCat: "Hats",
-      prodPrice: 25.00,
-      prodSold: 20
-    },
-    {
-      prodID: "PD002",
-      prodName: "Water bottles",
-      prodDesc: "Floral lotus printed bottle",
-      prodCat: "Drinkware",
-      prodPrice: 48.50,
-      prodSold: 10
-    },
-    {
-      prodID: "PD003",
-      prodName: "Sweatshirt",
-      prodDesc: "Palestine sweater",
-      prodCat: "Clothing",
-      prodPrice: 17.50,
-      prodSold: 70
-    },
-    {
-      prodID: "PD004",
-      prodName: "Posters",
-      prodDesc: "Vibes printed poster",
-      prodCat: "Home decor",
-      prodPrice: 12.00,
-      prodSold: 60
-    },
-    {
-      prodID: "PD005",
-      prodName: "Pillow cases",
-      prodDesc: "Morrocan print pillow case",
-      prodCat: "Accessories",
-      prodPrice: 17.00,
-      prodSold: 40
-    },
-  ]);
-  const categorySalesData = calculateCategorySales(items);
-
-  const sortedCategorySales = Object.entries(categorySalesData)
-    .sort(([, a], [, b]) => b - a)
-    .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
-
-  const barChartOptions = {
-      series: [{
-          name: dashboardT("Total Sales"),
-          data: Object.values(sortedCategorySales),
-      }],
-      chart: {
-        type: 'bar',
-        height: 350,
-        toolbar: {show: false},
-      },
-      theme: {
-        palette: 'palette9' // upto palette10
-      },
-      // colors: ['#247BA0', '#A37A74', '#249672', '#e49273', '#9AADBF'],
-      plotOptions: {
-        bar: {
-          distributed: true,
-          borderRadius: 3,
-          horizontal: false,
-          columnWidth: '50%',
-        },
-      },
-      dataLabels: {
-        enabled: false,
-      },
-      legend: {
-        show: false,
-      },
-      fill: {
-        opacity: 0.7,
-      },
-      xaxis: {
-        categories: Object.keys(sortedCategorySales).map((category) => dashboardT(category)),
-        axisTicks: {
-          show: false,
-        },
-      },
-      yaxis: {
-        title: {
-          text: dashboardT("Total Sales ($)"),
-        },
-        axisTicks: {
-          show: false,
-        },
-      },
-      tooltip: {
-        y: {
-          formatter: function (val) {
-            return '$' + val.toFixed(2);
-          }
-        }
-      }
-    };
-    
-  if (barChart) barChart.destroy();
-  barChart = new ApexCharts(
-    document.querySelector('#bar-chart'), barChartOptions
-  );
-  barChart.render();
-
-
-  // DONUT CHART
-
-  function calculateCategoryExp(transactions) {
-    const categoryExpenses = {};
-
-    transactions.forEach(transaction => {
-      const category = transaction.trCategory;
-
-      if (!categoryExpenses[category]) {
-        categoryExpenses[category] = 0;
-      }
-
-      categoryExpenses[category] += transaction.trAmount;
-    });
-
+function calculateCategoryExpenses(transactions) {
+  return transactions.reduce((categoryExpenses, transaction) => {
+    const category = transaction.trCategory;
+    categoryExpenses[category] = (categoryExpenses[category] || 0) + core.toFiniteNumber(transaction.trAmount);
     return categoryExpenses;
-  }
+  }, {});
+}
 
-  const expItems = core.parseStoredArray(localStorage, 'bizTrackTransactions', [
-    {
-      trID: 1,
-      trDate: "2024-01-05",
-      trCategory: "Rent",
-      trAmount: 100.00,
-      trNotes: "January Rent"
-  },
-  {
-      trID: 2,
-      trDate: "2024-01-15",
-      trCategory: "Order Fulfillment",
-      trAmount: 35.00,
-      trNotes: "Order #1005"
-  },
-  {
-      trID: 3,
-      trDate: "2024-01-08",
-      trCategory: "Utilities",
-      trAmount: 120.00,
-      trNotes: "Internet"
-  },
-  {
-      trID: 4,
-      trDate: "2024-02-05",
-      trCategory: "Supplies",
-      trAmount: 180.00,
-      trNotes: "Embroidery Machine"
-  },
-  {
-      trID: 5,
-      trDate: "2024-01-25",
-      trCategory: "Miscellaneous",
-      trAmount: 20.00,
-      trNotes: "Pizza"
-  },
-  ]);
-  const categoryExpData = calculateCategoryExp(expItems);
+function sortedEntries(data) {
+  return Object.entries(data).sort(([, a], [, b]) => b - a);
+}
 
-  const donutChartOptions = {
-    series: Object.values(categoryExpData),
-    labels: Object.keys(categoryExpData).map((category) => dashboardT(category)),
-    chart: {
-      // height: 350,
-      type: 'donut',
-      width: '100%',
-      toolbar: {
-        show: false,
-      },
-    },
-    theme: {
-      palette: 'palette1' // upto palette10
-    },
-    dataLabels: {
-      enabled: true,
-      style: {
-        fontSize: '14px',
-        fontFamily: 'Loto, sans-serif',
-        fontWeight: 'regular',
-      },
-    },
-    plotOptions: {
-      pie: {
-        customScale: 0.8,
-        donut: {
-          size: '60%',
-        },
-        offsetY: 20,
-      },
-      stroke: {
-        colors: undefined
-      }
-    },
-    legend: {
-      position: 'left',
-      offsetY: 55,
+function formatCurrency(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? `${number.toFixed(2)}` : "$0.00";
+}
+
+function chartColors() {
+  return ["#249672", "#247BA0", "#e49273", "#A37A74", "#9AADBF", "#634844"];
+}
+
+function renderEChart(currentChart, elementId, options) {
+  const element = document.getElementById(elementId);
+  if (!element || !window.echarts) return currentChart;
+
+  if (currentChart) currentChart.dispose();
+  const chart = window.echarts.init(element);
+  chart.setOption(options);
+  return chart;
+}
+
+function initializeChart(data = getDashboardData()) {
+  renderSalesChart(data.products);
+  renderExpensesChart(data.expenses);
+  renderTrendChart(data.orders, data.expenses);
+}
+
+function renderSalesChart(products) {
+  const entries = sortedEntries(calculateCategorySales(products));
+
+  salesChart = renderEChart(salesChart, "bar-chart", {
+    color: chartColors(),
+    grid: {
+      top: 24,
+      right: 16,
+      bottom: 56,
+      left: 62,
     },
     tooltip: {
-      y: {
-        formatter: function (val) {
-          return '$' + val.toFixed(2);
-        }
-      }
+      trigger: "axis",
+      valueFormatter: formatCurrency,
     },
-  };
-  
-  if (donutChart) donutChart.destroy();
-  donutChart = new ApexCharts(
-    document.querySelector('#donut-chart'),
-    donutChartOptions
-  );
-  donutChart.render();
-};
+    xAxis: {
+      type: "category",
+      data: entries.map(([category]) => dashboardT(category)),
+      axisLabel: {
+        interval: 0,
+        rotate: entries.length > 4 ? 25 : 0,
+      },
+    },
+    yAxis: {
+      type: "value",
+      name: dashboardT("Total Sales ($)"),
+      axisLabel: {
+        formatter(value) {
+          return `$${value}`;
+        },
+      },
+    },
+    series: [
+      {
+        name: dashboardT("Total Sales"),
+        type: "bar",
+        data: entries.map(([, value]) => Number(value.toFixed(2))),
+        barMaxWidth: 54,
+        itemStyle: {
+          borderRadius: [4, 4, 0, 0],
+        },
+      },
+    ],
+  });
+}
 
-window.addEventListener("biztrack:languagechange", () => {
-  renderDashboardMetrics();
-  if (document.querySelector("#bar-chart") && document.querySelector("#donut-chart")) {
-    initializeChart();
-  }
-});
+function renderExpensesChart(expenses) {
+  const entries = sortedEntries(calculateCategoryExpenses(expenses));
+
+  expensesChart = renderEChart(expensesChart, "donut-chart", {
+    color: chartColors().slice().reverse(),
+    tooltip: {
+      trigger: "item",
+      valueFormatter: formatCurrency,
+    },
+    legend: {
+      type: "scroll",
+      orient: "vertical",
+      left: 0,
+      top: "middle",
+    },
+    series: [
+      {
+        name: dashboardT("Expenses"),
+        type: "pie",
+        radius: ["46%", "72%"],
+        center: ["62%", "52%"],
+        avoidLabelOverlap: true,
+        label: {
+          formatter: "{b}\n{d}%",
+        },
+        data: entries.map(([category, value]) => ({
+          name: dashboardT(category),
+          value: Number(value.toFixed(2)),
+        })),
+      },
+    ],
+  });
+}
+
+function renderTrendChart(orders, expenses) {
+  const revenueByMonth = groupAmountByMonth(orders, "orderDate", "orderTotal");
+  const expensesByMonth = groupAmountByMonth(expenses, "trDate", "trAmount");
+  const months = Array.from(new Set([
+    ...Object.keys(revenueByMonth),
+    ...Object.keys(expensesByMonth),
+  ])).sort();
+
+  trendChart = renderEChart(trendChart, "trend-chart", {
+    color: ["#249672", "#e49273"],
+    grid: {
+      top: 28,
+      right: 20,
+      bottom: 44,
+      left: 62,
+    },
+    tooltip: {
+      trigger: "axis",
+      valueFormatter: formatCurrency,
+    },
+    legend: {
+      top: 0,
+    },
+    xAxis: {
+      type: "category",
+      boundaryGap: false,
+      data: months,
+    },
+    yAxis: {
+      type: "value",
+      axisLabel: {
+        formatter(value) {
+          return `$${value}`;
+        },
+      },
+    },
+    series: [
+      {
+        name: dashboardT("Revenue"),
+        type: "line",
+        smooth: true,
+        data: months.map((month) => Number((revenueByMonth[month] || 0).toFixed(2))),
+      },
+      {
+        name: dashboardT("Expenses"),
+        type: "line",
+        smooth: true,
+        data: months.map((month) => Number((expensesByMonth[month] || 0).toFixed(2))),
+      },
+    ],
+  });
+}
+
+function groupAmountByMonth(items, dateKey, amountKey) {
+  return items.reduce((months, item) => {
+    const month = String(item[dateKey] || "Unknown").slice(0, 7);
+    months[month] = (months[month] || 0) + core.toFiniteNumber(item[amountKey]);
+    return months;
+  }, {});
+}
+
+function resizeDashboardCharts() {
+  [salesChart, expensesChart, trendChart].forEach((chart) => chart?.resize());
+}
+
+window.addEventListener("DOMContentLoaded", renderDashboard);
+window.addEventListener("resize", resizeDashboardCharts);
+window.addEventListener("biztrack:languagechange", renderDashboard);

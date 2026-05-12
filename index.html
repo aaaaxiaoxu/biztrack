@@ -132,16 +132,18 @@
                     <span class="chart-title">{{ t("expenses") }}</span>
                     <div id="donut-chart"></div>
                 </div>
+                <div class="charts-card">
+                    <span class="chart-title">{{ t("revenueVsExpensesTrend") }}</span>
+                    <div id="trend-chart"></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Apex Charts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.45.2/apexcharts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
     <script src="/app-core.js"></script>
     <script src="/i18n.js"></script>
     <script src="/common.js"></script>
     <script src="/script.js"></script>
-    <script>initializeChart()</script>
 </body>
 </html>

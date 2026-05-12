@@ -124,7 +124,8 @@
     "Expenses": "支出",
     "Sales by Product Category": "按產品分類統計銷售額",
     "Total Sales": "總銷售額",
-    "Total Sales ($)": "總銷售額（$）"
+    "Total Sales ($)": "總銷售額（$）",
+    "revenueVsExpensesTrend": "收入與支出趨勢"
   },
   "products": {
     "documentTitle": "產品 - BizTrack",

@@ -19,7 +19,7 @@ Please refer to --- https://biztrack-6tl.pages.dev/.
 - **Expenses Management**: Log expenses, categorize them and maintain a clear overview of all financial transactions.
 - **Insightful Dashboard**: Gives a quick snapshot of the business with a dashboard that displays summary stats such as revenue, expenses, the number of orders, and current balance.
 - **Search and Sort Entries**: Use Tabulator-powered product, order, and expense tables with built-in sorting, pagination, and filtering.
-- **Analytics**: Explore sales by product category and track expenses with visually appealing charts
+- **Analytics**: Explore sales, expenses, and trends with ECharts.
 - **Export to CSV**: Download all data tables into CSV seamlessly.
 - **Internationalization**: Switch the interface between English and Chinese.
 - **Privacy Compliance**: Cookie consent banner and a dedicated privacy policy page.
@@ -44,7 +44,7 @@ Current Istanbul coverage from `npm test`:
 
 Why this project? 😼 It all started with my eagerness to learn more about web development. This project marks the end of my first module in the Get Coding program, and boy, have I learned a lot!
 
-From understanding how JavaScript functions work to making web pages interactive, it's been quite the journey. One of the coolest parts was learning how to visualize data using ApexCharts library, which made everything more interesting. Through experimenting with different techniques like loops and if statements, I've not only improved my coding skills but also learned how to make websites easier to use for everyone.
+From understanding how JavaScript functions work to making web pages interactive, it's been quite the journey. One of the coolest parts was learning how to visualize and organize data with ECharts and Tabulator, which made everything more interesting. Through experimenting with different techniques like loops and if statements, I've not only improved my coding skills but also learned how to make websites easier to use for everyone.
 
 This project represents my growth, determination, and love for coding. I hope you enjoy checking it out as much as I enjoyed making it!
 
@@ -54,6 +54,7 @@ This project represents my growth, determination, and love for coding. I hope yo
 - CSS
 - JavaScript
 - Tabulator
+- ECharts
 
 ## 🤝 Acknowledgments
 

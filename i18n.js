@@ -62,6 +62,17 @@
     }
   }
 
+  function navigateToLocale(locale) {
+    const nextPath = buildLocalizedPath(locale);
+    const nextUrl = `${nextPath}${window.location.search}${window.location.hash}`;
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (nextUrl === currentUrl) return false;
+
+    localStorage.setItem(STORAGE_KEY, normalizeLocale(locale));
+    window.location.assign(nextUrl);
+    return true;
+  }
+
   function getPagePrefix() {
     const page = document.body?.dataset.i18nPage;
     if (page) return `${page}.`;
@@ -176,7 +187,9 @@
   }
 
   async function setLocale(locale) {
-    return applyLocale(locale, { updatePath: true });
+    const nextLocale = normalizeLocale(locale);
+    if (navigateToLocale(nextLocale)) return;
+    return applyLocale(nextLocale, { updatePath: false });
   }
 
   function getLocale() {

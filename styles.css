@@ -593,6 +593,13 @@ tfoot td {
     transform: scale(1.2);
 }
 
+#bar-chart,
+#donut-chart,
+#trend-chart {
+    min-height: 350px;
+    width: 100%;
+}
+
 .language-control {
     margin-bottom: 0;
     position: relative;
