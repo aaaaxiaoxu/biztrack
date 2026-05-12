@@ -67,9 +67,13 @@
       item.setAttribute("role", "menuitemradio");
       item.setAttribute("aria-checked", "false");
       item.textContent = locale.label;
-      item.addEventListener("click", () => {
-        window.BizTrackI18n?.setLocale(locale.value);
-        setMenuOpen(false);
+      item.addEventListener("click", async () => {
+        try {
+          await window.BizTrackI18n?.setLocale(locale.value);
+          setMenuOpen(false);
+        } catch (error) {
+          console.error("Unable to switch language", error);
+        }
       });
       menu.appendChild(item);
     });
@@ -121,7 +125,7 @@
     message.textContent = "{{ t(\"common.BizTrack stores business records and language/cookie preferences in this browser only. We do not sell or share your data.\") }}";
 
     const privacyLink = document.createElement("a");
-    privacyLink.href = "./privacy.html";
+    privacyLink.href = "/privacy.html";
     privacyLink.textContent = "{{ t(\"common.Privacy Policy\") }}";
 
     const actions = document.createElement("div");

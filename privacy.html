@@ -3,27 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./styles.css"/>
+    <link rel="stylesheet" href="/styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
-    <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
     <title>{{ t("documentTitle") }}</title>
 </head>
 <body data-i18n-page="privacy">
     <div id="sidebar" class="sidebar">
         <div class="logo">
-            <a href="./index.html">
+            <a href="/index.html">
                 <i class="fas fa-b" aria-hidden="true"></i>
                 <span>BizTrack</span>
             </a>
             <i class="fa-solid fa-xmark" title="{{ t('common.Close') }}" onclick="closeSidebar()"></i>
         </div>
         <ul class="menu">
-            <li><a href="./index.html"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i><span>{{ t("common.Dashboard") }}</span></a></li>
-            <li><a href="./products.html"><i class="fas fa-dolly" aria-hidden="true"></i><span>{{ t("common.Products") }}</span></a></li>
-            <li><a href="./orders.html"><i class="fas fa-shopping-cart" aria-hidden="true"></i><span>{{ t("common.Orders") }}</span></a></li>
-            <li><a href="./finances.html"><i class="fas fa-sack-dollar" aria-hidden="true"></i><span>{{ t("common.Expenses") }}</span></a></li>
-            <li><a href="./help.html"><i class="fas fa-question-circle" aria-hidden="true"></i><span>{{ t("common.Help") }}</span></a></li>
-            <li class="logout active"><a href="./privacy.html"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><span>{{ t("common.Privacy Policy") }}</span></a></li>
+            <li><a href="/index.html"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i><span>{{ t("common.Dashboard") }}</span></a></li>
+            <li><a href="/products.html"><i class="fas fa-dolly" aria-hidden="true"></i><span>{{ t("common.Products") }}</span></a></li>
+            <li><a href="/orders.html"><i class="fas fa-shopping-cart" aria-hidden="true"></i><span>{{ t("common.Orders") }}</span></a></li>
+            <li><a href="/finances.html"><i class="fas fa-sack-dollar" aria-hidden="true"></i><span>{{ t("common.Expenses") }}</span></a></li>
+            <li><a href="/help.html"><i class="fas fa-question-circle" aria-hidden="true"></i><span>{{ t("common.Help") }}</span></a></li>
+            <li class="logout active"><a href="/privacy.html"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><span>{{ t("common.Privacy Policy") }}</span></a></li>
         </ul>
     </div>
 
@@ -43,13 +43,13 @@
             <p>{{ t("BizTrack is a client-side small-business dashboard. Products, orders, expenses, language preference, and cookie consent are stored in this browser through localStorage.") }}</p>
             <p>{{ t("No account system, analytics tracker, advertising cookie, or server-side personal-data collection is used by this version of the application.") }}</p>
             <p>{{ t("You can remove stored records at any time by clearing this site's browser data. Exported CSV files are created locally and are controlled by the user after download.") }}</p>
-            <a class="btn" href="./index.html">{{ t("common.Dashboard") }}</a>
+            <a class="btn" href="/index.html">{{ t("common.Dashboard") }}</a>
         </section>
     </main>
 
-    <script src="./app-core.js"></script>
-    <script src="./i18n.js"></script>
-    <script src="./common.js"></script>
-    <script src="./help.js"></script>
+    <script src="/app-core.js"></script>
+    <script src="/i18n.js"></script>
+    <script src="/common.js"></script>
+    <script src="/help.js"></script>
 </body>
 </html>

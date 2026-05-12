@@ -2,12 +2,22 @@
   const STORAGE_KEY = "bizTrackLanguage";
   const DEFAULT_LOCALE = "en_US";
   const SUPPORTED_LOCALES = ["en_US", "zh_CN", "zh_HK"];
+  const localePathPrefixes = {
+    en_US: "",
+    zh_CN: "zh-cn",
+    zh_HK: "zh-hk",
+  };
+  const prefixLocales = Object.fromEntries(
+    Object.entries(localePathPrefixes)
+      .filter(([, prefix]) => prefix)
+      .map(([locale, prefix]) => [prefix, locale])
+  );
   const legacyLocaleMap = {
     en: "en_US",
     zh: "zh_CN",
   };
 
-  let currentLocale = normalizeLocale(localStorage.getItem(STORAGE_KEY));
+  let currentLocale = getLocaleFromPath();
   let currentMessages = {};
   let fallbackMessages = {};
   let initPromise = null;
@@ -18,6 +28,38 @@
 
   function localeToLang(locale) {
     return locale.replace("_", "-");
+  }
+
+  function getLocaleFromPath(pathname = window.location.pathname) {
+    const firstSegment = pathname.split("/").filter(Boolean)[0]?.toLowerCase();
+    return prefixLocales[firstSegment] || DEFAULT_LOCALE;
+  }
+
+  function stripLocaleFromPath(pathname = window.location.pathname) {
+    const segments = pathname.split("/").filter(Boolean);
+    if (prefixLocales[segments[0]?.toLowerCase()]) {
+      segments.shift();
+    }
+
+    return segments.length ? `/${segments.join("/")}` : "/";
+  }
+
+  function buildLocalizedPath(locale, pathname = window.location.pathname) {
+    const nextLocale = normalizeLocale(locale);
+    const cleanPath = stripLocaleFromPath(pathname);
+    const prefix = localePathPrefixes[nextLocale];
+
+    if (!prefix) return cleanPath;
+    return cleanPath === "/" ? `/${prefix}` : `/${prefix}${cleanPath}`;
+  }
+
+  function updateBrowserPath(locale) {
+    const nextPath = buildLocalizedPath(locale);
+    const nextUrl = `${nextPath}${window.location.search}${window.location.hash}`;
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (nextUrl !== currentUrl) {
+      window.history.pushState({ locale }, "", nextUrl);
+    }
   }
 
   function getPagePrefix() {
@@ -40,7 +82,7 @@
   }
 
   async function loadMessages(locale) {
-    const response = await fetch(`./locales/${locale}.json`);
+    const response = await fetch(`/locales/${locale}.json`);
     if (!response.ok) {
       throw new Error(`Unable to load locale ${locale}`);
     }
@@ -50,6 +92,7 @@
   async function init() {
     if (!initPromise) {
       initPromise = (async () => {
+        currentLocale = getLocaleFromPath();
         fallbackMessages = await loadMessages(DEFAULT_LOCALE);
         currentMessages = currentLocale === DEFAULT_LOCALE ? fallbackMessages : await loadMessages(currentLocale);
         localStorage.setItem(STORAGE_KEY, currentLocale);
@@ -120,14 +163,20 @@
     };
   }
 
-  async function setLocale(locale) {
+  async function applyLocale(locale, options = {}) {
+    const { updatePath = false } = options;
     const nextLocale = normalizeLocale(locale);
     currentLocale = nextLocale;
     currentMessages = nextLocale === DEFAULT_LOCALE ? fallbackMessages : await loadMessages(nextLocale);
     localStorage.setItem(STORAGE_KEY, nextLocale);
+    if (updatePath) updateBrowserPath(nextLocale);
     document.documentElement.lang = localeToLang(nextLocale);
     applyTranslations();
     window.dispatchEvent(new CustomEvent("biztrack:languagechange", { detail: { locale: nextLocale } }));
+  }
+
+  async function setLocale(locale) {
+    return applyLocale(locale, { updatePath: true });
   }
 
   function getLocale() {
@@ -205,7 +254,39 @@
     applyDataBindings(root);
     applyTextTemplates(root);
     applyAttributeTemplates(root);
+    localizeLinks(root);
   }
+
+  function shouldLocalizeHref(href) {
+    if (!href || href.startsWith("#")) return false;
+    if (/^(https?:|mailto:|tel:)/i.test(href)) return false;
+    return href.endsWith(".html") || href === "/" || href === "./" || href === ".";
+  }
+
+  function normalizeInternalHref(href) {
+    if (href === "." || href === "./") return "/";
+    const url = new URL(href, window.location.origin);
+    return stripLocaleFromPath(url.pathname);
+  }
+
+  function localizeLinks(root = document) {
+    root.querySelectorAll("a[href]").forEach((link) => {
+      if (!link.dataset.i18nHref) {
+        const href = link.getAttribute("href");
+        if (!shouldLocalizeHref(href)) return;
+        link.dataset.i18nHref = normalizeInternalHref(href);
+      }
+
+      link.setAttribute("href", buildLocalizedPath(currentLocale, link.dataset.i18nHref));
+    });
+  }
+
+  window.addEventListener("popstate", () => {
+    const locale = getLocaleFromPath();
+    if (locale !== currentLocale) {
+      applyLocale(locale, { updatePath: false });
+    }
+  });
 
   window.BizTrackI18n = {
     init,
@@ -213,6 +294,9 @@
     t,
     setLocale,
     getLocale,
+    getLocaleFromPath,
+    stripLocaleFromPath,
+    buildLocalizedPath,
     applyTranslations,
     useI18nWrapper,
     useCommonI18n: () => useI18nWrapper("common."),
