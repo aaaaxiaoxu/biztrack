@@ -22,8 +22,11 @@ function closeForm() {
 let products = [];
 const core = window.BizTrackCore;
 const tables = window.BizTrackTables;
+const repositories = window.BizTrackRepository;
+const validation = window.BizTrackValidation;
 const productsI18n = window.BizTrackI18n?.useProductsI18n();
 const productsCommonI18n = window.BizTrackI18n?.useCommonI18n();
+let productRepository;
 let productTable;
 const defaultProducts = [
   {
@@ -68,11 +71,25 @@ const defaultProducts = [
   },
 ];
 
-function init() {
-  products = core.parseStoredArray(localStorage, "bizTrackProducts", defaultProducts);
-  localStorage.setItem("bizTrackProducts", JSON.stringify(products));
+function normalizeProduct(product) {
+  return {
+    ...product,
+    prodPrice: core.toFiniteNumber(product.prodPrice),
+    prodSold: core.toFiniteNumber(product.prodSold),
+  };
+}
 
-    renderProducts(products);
+function init() {
+  productRepository = repositories.createLocalStorageRepository({
+    storage: localStorage,
+    key: "bizTrackProducts",
+    defaults: defaultProducts,
+    idField: "prodID",
+    normalize: normalizeProduct,
+  });
+  products = productRepository.load();
+
+  renderProducts(products);
 }
 
 function addOrUpdate(event) {
@@ -95,40 +112,50 @@ function setSubmitMode(mode) {
   submitButton.textContent = productT(mode === "update" ? "Update" : "Add");
 }
 
+function readProductForm() {
+  return {
+    prodID: document.getElementById("product-id").value,
+    prodName: document.getElementById("product-name").value,
+    prodDesc: document.getElementById("product-desc").value,
+    prodCat: document.getElementById("product-cat").value,
+    prodPrice: document.getElementById("product-price").value,
+    prodSold: document.getElementById("product-sold").value,
+  };
+}
+
+function validateProductInput(currentID) {
+  const validate = validation.createPipeline([
+    validation.requiredField("prodID", "Product ID"),
+    validation.requiredField("prodName", "Product name"),
+    validation.requiredField("prodCat", "Product category"),
+    validation.requiredField("prodPrice", "Product price"),
+    validation.nonNegativeNumber("prodPrice", "Product price"),
+    validation.requiredField("prodSold", "Units sold"),
+    validation.nonNegativeNumber("prodSold", "Units sold"),
+    validation.uniqueId({
+      field: "prodID",
+      exists: (prodID) => productRepository.existsById(prodID, currentID),
+      message: () => productT("Product ID already exists. Please use a unique ID."),
+    }),
+  ]);
+
+  return validate(readProductForm());
+}
+
 function newProduct(event) {
   event.preventDefault();
-  const prodID = document.getElementById("product-id").value;
-  const prodName = document.getElementById("product-name").value;
-  const prodDesc = document.getElementById("product-desc").value;
-  const prodCat = document.getElementById("product-cat").value;
-  let prodPrice;
-  let prodSold;
+  let product;
   try {
-    prodPrice = core.assertNonNegativeNumber(document.getElementById("product-price").value, "Product price");
-    prodSold = core.assertNonNegativeNumber(document.getElementById("product-sold").value, "Units sold");
+    product = validateProductInput(null);
   } catch (error) {
     alert(error.message);
     return;
   }
 
-  if (isDuplicateID(prodID, null)) {
-    alert(productT("Product ID already exists. Please use a unique ID."));
-    return;
-  }
-
-  const product = {
-    prodID,
-    prodName,
-    prodDesc,
-    prodCat,
-    prodPrice,
-    prodSold,
-  };
-
-  products.push(product);
+  productRepository.add(product);
+  products = productRepository.all();
 
   renderProducts(products);
-  localStorage.setItem("bizTrackProducts", JSON.stringify(products));
 
   document.getElementById("product-form").reset();
   setSubmitMode("add");
@@ -175,7 +202,8 @@ function buildProductColumns() {
 }
 
 function editRow(prodID) {
-  const productToEdit = products.find(product => product.prodID === prodID);
+  const productToEdit = productRepository.findById(prodID);
+  if (!productToEdit) return;
 
   document.getElementById("product-id").value = productToEdit.prodID;
   document.getElementById("product-name").value = productToEdit.prodName;
@@ -190,57 +218,35 @@ function editRow(prodID) {
 }
 
 function deleteProduct(prodID) {
-  const indexToDelete = products.findIndex(product => product.prodID === prodID);
-
-  if (indexToDelete !== -1) {
-      products.splice(indexToDelete, 1);
-
-      localStorage.setItem("bizTrackProducts", JSON.stringify(products));
-
-      renderProducts(products);
+  if (productRepository.remove(prodID)) {
+    products = productRepository.all();
+    renderProducts(products);
   }
 }
 
 function updateProduct(prodID) {
-    const indexToUpdate = products.findIndex(product => product.prodID === prodID);
+    if (!productRepository.findById(prodID)) return;
 
-    if (indexToUpdate !== -1) {
-        let prodPrice;
-        let prodSold;
-        try {
-            prodPrice = core.assertNonNegativeNumber(document.getElementById("product-price").value, "Product price");
-            prodSold = core.assertNonNegativeNumber(document.getElementById("product-sold").value, "Units sold");
-        } catch (error) {
-            alert(error.message);
-            return;
-        }
-        const updatedProduct = {
-            prodID: document.getElementById("product-id").value,
-            prodName: document.getElementById("product-name").value,
-            prodDesc: document.getElementById("product-desc").value,
-            prodCat: document.getElementById("product-cat").value,
-            prodPrice,
-            prodSold,
-        };
-
-        if (isDuplicateID(updatedProduct.prodID, prodID)) {
-            alert(productT("Product ID already exists. Please use a unique ID."));
-            return;
-        }
-
-        products[indexToUpdate] = updatedProduct;
-
-        localStorage.setItem("bizTrackProducts", JSON.stringify(products));
-
-        renderProducts(products);
-
-        document.getElementById("product-form").reset();
-        setSubmitMode("add");
+    let updatedProduct;
+    try {
+      updatedProduct = validateProductInput(prodID);
+    } catch (error) {
+      alert(error.message);
+      return;
     }
+
+    productRepository.update(prodID, updatedProduct);
+    products = productRepository.all();
+
+    renderProducts(products);
+
+    document.getElementById("product-form").reset();
+    setSubmitMode("add");
 }
 
 function isDuplicateID(prodID, currentID) {
-    return products.some(product => product.prodID === prodID && product.prodID !== currentID);
+    return productRepository?.existsById(prodID, currentID)
+      ?? products.some(product => product.prodID === prodID && product.prodID !== currentID);
 }
 
 function sortTable(column) {
