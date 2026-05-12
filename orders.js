@@ -29,9 +29,12 @@ function closeForm() {
 let orders = [];
 const core = window.BizTrackCore;
 const tables = window.BizTrackTables;
+const repositories = window.BizTrackRepository;
+const validation = window.BizTrackValidation;
 const orderState = window.BizTrackOrderState;
 const ordersI18n = window.BizTrackI18n?.useOrdersI18n();
 const ordersCommonI18n = window.BizTrackI18n?.useCommonI18n();
+let orderRepository;
 let orderTable;
 const defaultOrders = [
     {
@@ -91,10 +94,27 @@ const defaultOrders = [
     },
 ];
 
+function normalizeOrder(order) {
+    const normalized = orderState.normalizeOrder(order);
+    return {
+        ...normalized,
+        itemPrice: core.toFiniteNumber(normalized.itemPrice),
+        qtyBought: core.toFiniteNumber(normalized.qtyBought),
+        shipping: core.toFiniteNumber(normalized.shipping),
+        taxes: core.toFiniteNumber(normalized.taxes),
+        orderTotal: core.toFiniteNumber(normalized.orderTotal),
+    };
+}
+
 window.onload = function () {
-    orders = core.parseStoredArray(localStorage, "bizTrackOrders", defaultOrders)
-        .map(orderState.normalizeOrder);
-    localStorage.setItem("bizTrackOrders", JSON.stringify(orders));
+    orderRepository = repositories.createLocalStorageRepository({
+        storage: localStorage,
+        key: "bizTrackOrders",
+        defaults: defaultOrders,
+        idField: "orderID",
+        normalize: normalizeOrder,
+    });
+    orders = orderRepository.load();
 
     renderOrders(orders);
     setSubmitMode("add");
@@ -142,56 +162,78 @@ function updateStatusOptions(mode, currentStatus) {
         : workflowStatus;
 }
 
+function readOrderForm() {
+  return {
+    orderID: document.getElementById("order-id").value,
+    orderDate: document.getElementById("order-date").value,
+    itemName: document.getElementById("item-name").value,
+    itemPrice: document.getElementById("item-price").value,
+    qtyBought: document.getElementById("qty-bought").value,
+    shipping: document.getElementById("shipping").value,
+    taxes: document.getElementById("taxes").value,
+    orderStatus: document.getElementById("order-status").value || orderState.STATUSES.PENDING,
+  };
+}
+
+function validateOrderInput(currentOrder) {
+  const validate = validation.createPipeline([
+    validation.requiredField("orderID", "Order ID"),
+    validation.requiredField("orderDate", "Order date"),
+    validation.requiredField("itemName", "Item name"),
+    validation.requiredField("itemPrice", "Item price"),
+    validation.nonNegativeNumber("itemPrice", "Item price"),
+    validation.requiredField("qtyBought", "Quantity"),
+    validation.nonNegativeNumber("qtyBought", "Quantity"),
+    validation.requiredField("shipping", "Shipping"),
+    validation.nonNegativeNumber("shipping", "Shipping"),
+    validation.requiredField("taxes", "Taxes"),
+    validation.nonNegativeNumber("taxes", "Taxes"),
+    validation.uniqueId({
+      field: "orderID",
+      exists: (orderID) => orderRepository.existsById(orderID, currentOrder?.orderID ?? null),
+      message: () => orderT("Order ID already exists. Please use a unique ID."),
+    }),
+    validation.custom((values) => {
+      const orderTotal = core.calculateOrderTotal(values.itemPrice, values.qtyBought, values.shipping, values.taxes);
+
+      if (!currentOrder) {
+        if (!orderState.isInitialStatus(values.orderStatus)) {
+          throw new validation.ValidationError(orderT("New orders must start as Pending."));
+        }
+
+        return {
+          orderStatus: orderState.STATUSES.PENDING,
+          orderTotal,
+        };
+      }
+
+      return {
+        orderStatus: orderState.assertValidTransition(currentOrder.orderStatus, values.orderStatus),
+        orderTotal,
+      };
+    }),
+  ]);
+
+  return validate(readOrderForm());
+}
 
 function newOrder(event) {
   event.preventDefault();
-  const orderID = document.getElementById("order-id").value;
-  const orderDate = document.getElementById("order-date").value;
-  const itemName = document.getElementById("item-name").value;
-  let itemPrice;
-  let qtyBought;
-  let shipping;
-  let taxes;
-  let orderTotal;
+  let order;
   try {
-    itemPrice = core.assertNonNegativeNumber(document.getElementById("item-price").value, "Item price");
-    qtyBought = core.assertNonNegativeNumber(document.getElementById("qty-bought").value, "Quantity");
-    shipping = core.assertNonNegativeNumber(document.getElementById("shipping").value, "Shipping");
-    taxes = core.assertNonNegativeNumber(document.getElementById("taxes").value, "Taxes");
-    orderTotal = core.calculateOrderTotal(itemPrice, qtyBought, shipping, taxes);
+    order = validateOrderInput(null);
   } catch (error) {
     alert(error.message);
-    return;
-  }
-  const requestedStatus = document.getElementById("order-status").value || orderState.STATUSES.PENDING;
-  if (!orderState.isInitialStatus(requestedStatus)) {
-    alert(orderT("New orders must start as Pending."));
-    updateStatusOptions("add");
-    return;
-  }
-  const orderStatus = orderState.STATUSES.PENDING;
-
-  if (isDuplicateID(orderID, null)) {
-    alert(orderT("Order ID already exists. Please use a unique ID."));
+    if (error.message === orderT("New orders must start as Pending.")) {
+      updateStatusOptions("add");
+    }
     return;
   }
 
-  const order = {
-    orderID,
-    orderDate,
-    itemName,
-    itemPrice,
-    qtyBought,
-    shipping,
-    taxes,
-    orderTotal,
-    orderStatus,
-  };
-
-  orders.push(order);
+  orderRepository.add(order);
+  orders = orderRepository.all();
 
   renderOrders(orders);
-  localStorage.setItem("bizTrackOrders", JSON.stringify(orders));
 
   document.getElementById("order-form").reset();
   setSubmitMode("add");
@@ -278,7 +320,7 @@ function displayRevenue() {
 }
 
 function editRow(orderID) {
-    const orderToEdit = orders.find(order => order.orderID === orderID);
+    const orderToEdit = orderRepository.findById(orderID);
     if (!orderToEdit) return;
 
     document.getElementById("order-id").value = orderToEdit.orderID;
@@ -297,79 +339,46 @@ function editRow(orderID) {
 }
 
 function deleteOrder(orderID) {
-  const indexToDelete = orders.findIndex(order => order.orderID === orderID);
-
-  if (indexToDelete !== -1) {
-      orders.splice(indexToDelete, 1);
-
-      localStorage.setItem("bizTrackOrders", JSON.stringify(orders));
-
+  if (orderRepository.remove(orderID)) {
+      orders = orderRepository.all();
       renderOrders(orders);
   }
 }
 
 function updateOrder(orderID) {
-    const indexToUpdate = orders.findIndex(order => order.orderID === orderID);
+    const currentOrder = orderRepository.findById(orderID);
+    if (!currentOrder) return;
 
-    if (indexToUpdate !== -1) {
-        const currentOrder = orders[indexToUpdate];
-        let itemPrice;
-        let qtyBought;
-        let shipping;
-        let taxes;
-        let orderTotal;
-        let orderStatus;
-        try {
-            itemPrice = core.assertNonNegativeNumber(document.getElementById("item-price").value, "Item price");
-            qtyBought = core.assertNonNegativeNumber(document.getElementById("qty-bought").value, "Quantity");
-            shipping = core.assertNonNegativeNumber(document.getElementById("shipping").value, "Shipping");
-            taxes = core.assertNonNegativeNumber(document.getElementById("taxes").value, "Taxes");
-            orderTotal = core.calculateOrderTotal(itemPrice, qtyBought, shipping, taxes);
-            orderStatus = orderState.assertValidTransition(currentOrder.orderStatus, document.getElementById("order-status").value);
-        } catch (error) {
-            const requestedStatus = document.getElementById("order-status").value;
-            if (error.message.startsWith("Invalid order status transition")) {
-                alert(orderT("Order {id} cannot move from {from} to {to}.", {
-                    id: currentOrder.orderID,
-                    from: orderT(orderState.normalizeStatus(currentOrder.orderStatus)),
-                    to: orderT(requestedStatus || "Choose a status"),
-                }));
-                updateStatusOptions("update", currentOrder.orderStatus);
-            } else {
-                alert(error.message);
-            }
-            return;
+    let updatedOrder;
+    try {
+        updatedOrder = validateOrderInput(currentOrder);
+    } catch (error) {
+        const requestedStatus = document.getElementById("order-status").value;
+        if (error.message.startsWith("Invalid order status transition")) {
+            alert(orderT("Order {id} cannot move from {from} to {to}.", {
+                id: currentOrder.orderID,
+                from: orderT(orderState.normalizeStatus(currentOrder.orderStatus)),
+                to: orderT(requestedStatus || "Choose a status"),
+            }));
+            updateStatusOptions("update", currentOrder.orderStatus);
+        } else {
+            alert(error.message);
         }
-        const updatedOrder = {
-            orderID: document.getElementById("order-id").value,
-            orderDate: document.getElementById("order-date").value,
-            itemName: document.getElementById("item-name").value,
-            itemPrice: itemPrice,
-            qtyBought: qtyBought,
-            shipping: shipping,
-            taxes: taxes,
-            orderTotal,
-            orderStatus,
-        };
-
-        if (isDuplicateID(updatedOrder.orderID, orderID)) {
-            alert(orderT("Order ID already exists. Please use a unique ID."));
-            return;
-        }
-
-        orders[indexToUpdate] = updatedOrder;
-
-        localStorage.setItem("bizTrackOrders", JSON.stringify(orders));
-
-        renderOrders(orders);
-
-        document.getElementById("order-form").reset();
-        setSubmitMode("add");
+        return;
     }
+
+    orderRepository.update(orderID, updatedOrder);
+    orders = orderRepository.all();
+
+    renderOrders(orders);
+
+    document.getElementById("order-form").reset();
+    setSubmitMode("add");
 }
 
 function isDuplicateID(orderID, currentID) {
-    return orders.some(order => order.orderID === orderID && order.orderID !== currentID);
+    return orderRepository?.existsById(orderID, currentID)
+      ?? orders.some(order => order.orderID === orderID && order.orderID !== currentID);
 }
 
 function sortTable(column) {

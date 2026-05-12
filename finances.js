@@ -23,8 +23,11 @@ let transactions = [];
 let serialNumberCounter;
 const core = window.BizTrackCore;
 const tables = window.BizTrackTables;
+const repositories = window.BizTrackRepository;
+const validation = window.BizTrackValidation;
 const expensesI18n = window.BizTrackI18n?.useExpensesI18n();
 const expensesCommonI18n = window.BizTrackI18n?.useCommonI18n();
+let transactionRepository;
 let transactionTable;
 const defaultTransactions = [
     {
@@ -64,10 +67,24 @@ const defaultTransactions = [
     },
 ];
 
+function normalizeTransaction(transaction) {
+    return {
+        ...transaction,
+        trID: core.toFiniteNumber(transaction.trID),
+        trAmount: core.toFiniteNumber(transaction.trAmount),
+    };
+}
+
 window.onload = function () {
-    transactions = core.parseStoredArray(localStorage, "bizTrackTransactions", defaultTransactions);
+    transactionRepository = repositories.createLocalStorageRepository({
+        storage: localStorage,
+        key: "bizTrackTransactions",
+        defaults: defaultTransactions,
+        idField: "trID",
+        normalize: normalizeTransaction,
+    });
+    transactions = transactionRepository.load();
     serialNumberCounter = core.nextTransactionId(transactions);
-    localStorage.setItem("bizTrackTransactions", JSON.stringify(transactions));
   
     renderTransactions(transactions);
 }
@@ -92,35 +109,44 @@ function setSubmitMode(mode) {
     submitButton.textContent = expenseT(mode === "update" ? "Update" : "Add");
 }
 
+function readTransactionForm(trID) {
+    return {
+        trID,
+        trDate: document.getElementById("tr-date").value,
+        trCategory: document.getElementById("tr-category").value,
+        trAmount: document.getElementById("tr-amount").value,
+        trNotes: document.getElementById("tr-notes").value,
+    };
+}
+
+function validateTransactionInput(rawTransaction) {
+    const validate = validation.createPipeline([
+        validation.requiredField("trDate", "Date"),
+        validation.requiredField("trCategory", "Expense category"),
+        validation.requiredField("trAmount", "Expense amount"),
+        validation.nonNegativeNumber("trAmount", "Expense amount"),
+        validation.requiredField("trNotes", "Notes"),
+    ]);
+
+    return validate(rawTransaction);
+}
+
 
 function newTransaction(event) {
     event.preventDefault();
-    const trDate = document.getElementById("tr-date").value;
-    const trCategory = document.getElementById("tr-category").value;
-    let trAmount;
+    serialNumberCounter = core.nextTransactionId(transactions);
+    let transaction;
     try {
-        trAmount = core.assertNonNegativeNumber(document.getElementById("tr-amount").value, "Expense amount");
+        transaction = validateTransactionInput(readTransactionForm(serialNumberCounter));
     } catch (error) {
         alert(error.message);
         return;
     }
-    const trNotes = document.getElementById("tr-notes").value;
-
-    serialNumberCounter = core.nextTransactionId(transactions);
-    let trID = serialNumberCounter;
     
-    const transaction = {
-      trID,
-      trDate,
-      trCategory,
-      trAmount,
-      trNotes,
-    };
-    
-    transactions.push(transaction);
+    transactionRepository.add(transaction);
+    transactions = transactionRepository.all();
   
     renderTransactions(transactions);
-    localStorage.setItem("bizTrackTransactions", JSON.stringify(transactions));
 
     serialNumberCounter++;
     displayExpenses();
@@ -181,7 +207,8 @@ function displayExpenses() {
 }
 
 function editRow(trID) {
-    const trToEdit = transactions.find(transaction => transaction.trID == trID);
+    const trToEdit = transactionRepository.findById(trID);
+    if (!trToEdit) return;
     
     document.getElementById("tr-id").value = trToEdit.trID;      
     document.getElementById("tr-date").value = trToEdit.trDate;
@@ -192,48 +219,33 @@ function editRow(trID) {
     setSubmitMode("update");
 
     document.getElementById("transaction-form").style.display = "block";
-  }
+}
   
 function deleteTransaction(trID) {
-    const indexToDelete = transactions.findIndex(transaction => transaction.trID == trID);
-
-    if (indexToDelete !== -1) {
-        transactions.splice(indexToDelete, 1);
-
-        localStorage.setItem("bizTrackTransactions", JSON.stringify(transactions));
-
+    if (transactionRepository.remove(trID)) {
+        transactions = transactionRepository.all();
         renderTransactions(transactions);
     }
 }
 
   function updateTransaction(trID) {
-    const indexToUpdate = transactions.findIndex(transaction => transaction.trID === trID);
+    if (!transactionRepository.findById(trID)) return;
 
-    if (indexToUpdate !== -1) {
-        let trAmount;
-        try {
-            trAmount = core.assertNonNegativeNumber(document.getElementById("tr-amount").value, "Expense amount");
-        } catch (error) {
-            alert(error.message);
-            return;
-        }
-        const updatedTransaction = {
-            trID: trID,
-            trDate: document.getElementById("tr-date").value,
-            trCategory: document.getElementById("tr-category").value,
-            trAmount,
-            trNotes: document.getElementById("tr-notes").value,
-        };
-
-        transactions[indexToUpdate] = updatedTransaction;
-
-        localStorage.setItem("bizTrackTransactions", JSON.stringify(transactions));
-
-        renderTransactions(transactions);
-
-        document.getElementById("transaction-form").reset();
-        setSubmitMode("add");
+    let updatedTransaction;
+    try {
+        updatedTransaction = validateTransactionInput(readTransactionForm(trID));
+    } catch (error) {
+        alert(error.message);
+        return;
     }
+
+    transactionRepository.update(trID, updatedTransaction);
+    transactions = transactionRepository.all();
+
+    renderTransactions(transactions);
+
+    document.getElementById("transaction-form").reset();
+    setSubmitMode("add");
 }
 
 function sortTable(column) {
