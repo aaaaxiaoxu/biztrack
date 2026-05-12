@@ -19,7 +19,7 @@ Please refer to --- https://biztrack-6tl.pages.dev/.
 - **Expenses Management**: Log expenses, categorize them and maintain a clear overview of all financial transactions.
 - **Insightful Dashboard**: Gives a quick snapshot of the business with a dashboard that displays summary stats such as revenue, expenses, the number of orders, and current balance.
 - **Search and Sort Entries**: Use Tabulator-powered product, order, and expense tables with built-in sorting, pagination, and filtering.
-- **Analytics**: Explore sales, expenses, and trends with ECharts.
+- **Analytics**: Explore sales, expenses, trends, and summary/pivot views with ECharts and Tabulator.
 - **Export to CSV**: Download all data tables into CSV seamlessly.
 - **Internationalization**: Switch the interface between English and Chinese.
 - **Privacy Compliance**: Cookie consent banner and a dedicated privacy policy page.

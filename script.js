@@ -10,9 +10,11 @@ function closeSidebar() {
 }
 
 const core = window.BizTrackCore;
+const tables = window.BizTrackTables;
 let salesChart;
 let expensesChart;
 let trendChart;
+let summaryTable;
 
 const defaultProducts = [
   {
@@ -171,6 +173,7 @@ function renderDashboard() {
   const data = getDashboardData();
   renderDashboardMetrics(data);
   initializeChart(data);
+  renderSummaryPivot(data);
 }
 
 function renderDashboardMetrics(data = getDashboardData()) {
@@ -225,13 +228,33 @@ function calculateCategoryExpenses(transactions) {
   }, {});
 }
 
+function calculateCategoryUnits(products) {
+  return products.reduce((categoryUnits, product) => {
+    const category = product.prodCat;
+    categoryUnits[category] = (categoryUnits[category] || 0) + core.toFiniteNumber(product.prodSold);
+    return categoryUnits;
+  }, {});
+}
+
+function calculateCategoryCounts(items, categoryKey) {
+  return items.reduce((counts, item) => {
+    const category = item[categoryKey];
+    counts[category] = (counts[category] || 0) + 1;
+    return counts;
+  }, {});
+}
+
 function sortedEntries(data) {
   return Object.entries(data).sort(([, a], [, b]) => b - a);
 }
 
 function formatCurrency(value) {
+  return tables?.formatCurrency(value) || `$${Number(value || 0).toFixed(2)}`;
+}
+
+function formatPercent(value) {
   const number = Number(value);
-  return Number.isFinite(number) ? `${number.toFixed(2)}` : "$0.00";
+  return Number.isFinite(number) ? `${number.toFixed(1)}%` : "";
 }
 
 function chartColors() {
@@ -397,6 +420,136 @@ function groupAmountByMonth(items, dateKey, amountKey) {
 
 function resizeDashboardCharts() {
   [salesChart, expensesChart, trendChart].forEach((chart) => chart?.resize());
+}
+
+// ---------- SUMMARY / PIVOT TABLE ----------
+
+function buildSummaryPivotRows(data) {
+  const salesByCategory = calculateCategorySales(data.products);
+  const unitsByCategory = calculateCategoryUnits(data.products);
+  const productCounts = calculateCategoryCounts(data.products, "prodCat");
+  const expensesByCategory = calculateCategoryExpenses(data.expenses);
+  const expenseCounts = calculateCategoryCounts(data.expenses, "trCategory");
+  const totalSales = Object.values(salesByCategory).reduce((total, value) => total + value, 0);
+  const totalExpenses = calculateExpTotal(data.expenses);
+
+  const salesRows = Object.keys(salesByCategory).map((category) => {
+    const revenue = salesByCategory[category];
+    return {
+      section: "Sales",
+      category: dashboardT(category),
+      records: productCounts[category] || 0,
+      units: unitsByCategory[category] || 0,
+      revenue,
+      expenses: 0,
+      net: revenue,
+      share: totalSales ? revenue / totalSales * 100 : 0,
+    };
+  });
+
+  const expenseRows = Object.keys(expensesByCategory).map((category) => {
+    const expenseAmount = expensesByCategory[category];
+    return {
+      section: "Expenses",
+      category: dashboardT(category),
+      records: expenseCounts[category] || 0,
+      units: 0,
+      revenue: 0,
+      expenses: expenseAmount,
+      net: -expenseAmount,
+      share: totalExpenses ? expenseAmount / totalExpenses * 100 : 0,
+    };
+  });
+
+  return [...salesRows, ...expenseRows];
+}
+
+function buildSummaryColumns() {
+  return [
+    tables.plainTextColumn(dashboardT("Type"), "section", { visible: false }),
+    tables.plainTextColumn(dashboardT("Category"), "category"),
+    {
+      title: dashboardT("Records"),
+      field: "records",
+      hozAlign: "right",
+      sorter: "number",
+      bottomCalc: "sum",
+    },
+    {
+      title: dashboardT("Units"),
+      field: "units",
+      hozAlign: "right",
+      sorter: "number",
+      bottomCalc: "sum",
+      formatter(cell) {
+        const value = Number(cell.getValue());
+        return value ? String(value) : "-";
+      },
+    },
+    {
+      title: dashboardT("Revenue"),
+      field: "revenue",
+      hozAlign: "right",
+      sorter: "number",
+      formatter: tables.currencyFormatter,
+      bottomCalc: "sum",
+      bottomCalcFormatter: tables.currencyFormatter,
+    },
+    {
+      title: dashboardT("Expenses"),
+      field: "expenses",
+      hozAlign: "right",
+      sorter: "number",
+      formatter: tables.currencyFormatter,
+      bottomCalc: "sum",
+      bottomCalcFormatter: tables.currencyFormatter,
+    },
+    {
+      title: dashboardT("Net"),
+      field: "net",
+      hozAlign: "right",
+      sorter: "number",
+      formatter(cell) {
+        const value = core.toFiniteNumber(cell.getValue());
+        const className = value < 0 ? "negative" : "positive";
+        return `<span class="summary-money ${className}">${formatCurrency(value)}</span>`;
+      },
+      bottomCalc: "sum",
+      bottomCalcFormatter(cell) {
+        return formatCurrency(cell.getValue());
+      },
+    },
+    {
+      title: dashboardT("Share"),
+      field: "share",
+      hozAlign: "right",
+      sorter: "number",
+      formatter(cell) {
+        return formatPercent(cell.getValue());
+      },
+    },
+  ];
+}
+
+function renderSummaryPivot(data = getDashboardData()) {
+  if (!document.getElementById("summary-pivot-table")) return;
+
+  if (summaryTable) {
+    summaryTable.destroy();
+    summaryTable = null;
+  }
+
+  summaryTable = tables.createOrUpdateTable(summaryTable, "#summary-pivot-table", {
+    data: buildSummaryPivotRows(data),
+    columns: buildSummaryColumns(),
+    groupBy: "section",
+    groupHeader(value, count) {
+      return `${tables.escapeHtml(dashboardT(value))} (${count})`;
+    },
+    maxHeight: "460px",
+    paginationSize: 10,
+    placeholder: dashboardT("No summary data"),
+  });
 }
 
 window.addEventListener("DOMContentLoaded", renderDashboard);

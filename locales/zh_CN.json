@@ -125,7 +125,16 @@
     "Sales by Product Category": "按产品分类统计销售额",
     "Total Sales": "总销售额",
     "Total Sales ($)": "总销售额（$）",
-    "revenueVsExpensesTrend": "收入与支出趋势"
+    "revenueVsExpensesTrend": "收入与支出趋势",
+    "performanceSummary": "经营汇总",
+    "Type": "类型",
+    "Category": "分类",
+    "Records": "记录数",
+    "Units": "数量",
+    "Sales": "销售",
+    "Net": "净额",
+    "Share": "占比",
+    "No summary data": "暂无汇总数据"
   },
   "products": {
     "documentTitle": "产品 - BizTrack",

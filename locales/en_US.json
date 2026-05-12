@@ -125,7 +125,16 @@
     "Sales by Product Category": "Sales by Product Category",
     "Total Sales": "Total Sales",
     "Total Sales ($)": "Total Sales ($)",
-    "revenueVsExpensesTrend": "Revenue vs Expenses Trend"
+    "revenueVsExpensesTrend": "Revenue vs Expenses Trend",
+    "performanceSummary": "Performance Summary",
+    "Type": "Type",
+    "Category": "Category",
+    "Records": "Records",
+    "Units": "Units",
+    "Sales": "Sales",
+    "Net": "Net",
+    "Share": "Share",
+    "No summary data": "No summary data"
   },
   "products": {
     "documentTitle": "Products - BizTrack",

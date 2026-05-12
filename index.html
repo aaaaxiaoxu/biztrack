@@ -7,6 +7,7 @@
     <meta property="og:description" content="A project born out of real small business challenges, now simplifying product, order, and finance management."/>
     <meta property="og:image:secure_url" content="https://i.imgur.com/0O47fVi.jpg"/>
     <meta property="og:url" content="https://sumusa.github.io/biztrack/"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabulator-tables@6.3.1/dist/css/tabulator.min.css"/>
     <link rel="stylesheet" href="/styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
@@ -138,12 +139,20 @@
                 </div>
             </div>
         </div>
+        <div class="summary-container">
+            <h3 class="main-title">{{ t("performanceSummary") }}</h3>
+            <div class="table-container summary-table-container">
+                <div id="summary-pivot-table" class="biztrack-data-table"></div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
     <script src="/app-core.js"></script>
     <script src="/i18n.js"></script>
     <script src="/common.js"></script>
+    <script src="/data-table.js"></script>
     <script src="/script.js"></script>
 </body>
 </html>

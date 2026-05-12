@@ -592,7 +592,23 @@ tfoot td {
 .icon-button:hover i {
     transform: scale(1.2);
 }
-
+.summary-container {
+    background: #ffffff;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    padding: 2rem;
+}
+.summary-table-container {
+    margin-top: 0.5rem;
+}
+.summary-money.positive {
+    color: var(--green-color);
+    font-weight: 700;
+}
+.summary-money.negative {
+    color: #d95d39;
+    font-weight: 700;
+}
 #bar-chart,
 #donut-chart,
 #trend-chart {
