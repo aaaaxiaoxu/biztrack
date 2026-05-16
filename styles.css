@@ -444,6 +444,13 @@ label {
 .biztrack-data-table .tabulator-col {
     border-right: 1px solid #d8dde3;
 }
+.biztrack-data-table .tabulator-col.tabulator-sortable:focus,
+.biztrack-data-table .tabulator-col.tabulator-sortable:focus-visible,
+.biztrack-data-table .tabulator-col.tabulator-sortable.is-keyboard-focus {
+    background: #fff8e5;
+    box-shadow: inset 0 0 0 3px #ffbf47;
+    outline: none;
+}
 .biztrack-data-table .tabulator-row {
     background: #f7f8fa;
 }
@@ -582,6 +589,12 @@ tfoot td {
     color: var(--black-color);
     cursor: pointer;
     padding: 0.35rem;
+}
+.icon-button:focus,
+.icon-button:focus-visible {
+    border-radius: 4px;
+    box-shadow: 0 0 0 3px #ffbf47;
+    outline: none;
 }
 .action i,
 .icon-button i {
