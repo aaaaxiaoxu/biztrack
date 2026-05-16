@@ -49,19 +49,33 @@
       download: false,
       formatter(cell) {
         const rowData = cell.getRow().getData();
-        const editAriaLabel = escapeHtml(resolveLabel(editLabel, rowData));
-        const deleteAriaLabel = escapeHtml(resolveLabel(deleteLabel, rowData));
+        const actions = root.document.createElement("div");
+        actions.className = "tabulator-actions";
 
-        return `
-          <div class="tabulator-actions">
-            <button type="button" class="icon-button edit-icon" data-action="edit" aria-label="${editAriaLabel}">
-              <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="icon-button delete-icon" data-action="delete" aria-label="${deleteAriaLabel}">
-              <i class="fas fa-trash-alt" aria-hidden="true"></i>
-            </button>
-          </div>
-        `;
+        const editButton = root.document.createElement("button");
+        editButton.type = "button";
+        editButton.className = "icon-button edit-icon";
+        editButton.dataset.action = "edit";
+        editButton.setAttribute("aria-label", resolveLabel(editLabel, rowData));
+
+        const editIcon = root.document.createElement("i");
+        editIcon.className = "fa-solid fa-pen-to-square";
+        editIcon.setAttribute("aria-hidden", "true");
+        editButton.appendChild(editIcon);
+
+        const deleteButton = root.document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className = "icon-button delete-icon";
+        deleteButton.dataset.action = "delete";
+        deleteButton.setAttribute("aria-label", resolveLabel(deleteLabel, rowData));
+
+        const deleteIcon = root.document.createElement("i");
+        deleteIcon.className = "fas fa-trash-alt";
+        deleteIcon.setAttribute("aria-hidden", "true");
+        deleteButton.appendChild(deleteIcon);
+
+        actions.append(editButton, deleteButton);
+        return actions;
       },
       cellClick(event, cell) {
         const actionButton = event.target.closest("[data-action]");

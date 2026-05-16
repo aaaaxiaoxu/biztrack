@@ -512,7 +512,10 @@ function buildSummaryColumns() {
       formatter(cell) {
         const value = core.toFiniteNumber(cell.getValue());
         const className = value < 0 ? "negative" : "positive";
-        return `<span class="summary-money ${className}">${formatCurrency(value)}</span>`;
+        const amount = document.createElement("span");
+        amount.className = `summary-money ${className}`;
+        amount.textContent = formatCurrency(value);
+        return amount;
       },
       bottomCalc: "sum",
       bottomCalcFormatter(cell) {

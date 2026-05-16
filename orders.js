@@ -297,7 +297,14 @@ function buildOrderColumns() {
             formatter(cell) {
                 const status = orderState.normalizeStatus(cell.getValue());
                 const className = orderState.getStatusClass(status);
-                return `<div class="status ${className}"><span>${tables.escapeHtml(orderT(status))}</span></div>`;
+                const statusBadge = document.createElement("div");
+                statusBadge.className = `status ${className}`;
+
+                const statusText = document.createElement("span");
+                statusText.textContent = orderT(status);
+                statusBadge.appendChild(statusText);
+
+                return statusBadge;
             },
         },
         tables.actionColumn({
