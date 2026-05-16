@@ -119,6 +119,7 @@ function injectLanguageToggle(): void {
     const locale = window.BizTrackI18n?.getLocale() || "en_US";
     const activeItem = menu.querySelector<HTMLElement>(`[data-locale="${locale}"]`);
     label.textContent = activeItem?.dataset.shortLabel || "EN";
+    button.setAttribute("aria-label", `${label.textContent} ${commonT("Language")}`);
     menu.querySelectorAll<HTMLElement>(".language-menu-item").forEach((item) => {
       const isActive = item.dataset.locale === locale;
       item.classList.toggle("is-active", isActive);

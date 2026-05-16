@@ -472,8 +472,14 @@ label {
     border-radius: 5px;
     color: var(--black-color);
     cursor: pointer;
-    margin: 0 2px;
+    margin: 0 4px;
+    min-height: 44px;
+    min-width: 44px;
     padding: 0.35rem 0.55rem;
+}
+.biztrack-data-table .tabulator-page-size {
+    min-height: 44px;
+    min-width: 64px;
 }
 .biztrack-data-table .tabulator .tabulator-footer .tabulator-page.active {
     background: var(--green-color);

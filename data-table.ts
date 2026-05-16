@@ -10,9 +10,7 @@ import type {
   TabulatorTable,
 } from "./types";
 
-type AccessibleTableHost = HTMLElement & {
-  __bizTrackAriaObserver?: MutationObserver;
-};
+const TABULATOR_ARIA_SELECTOR = ".tabulator, .tabulator *";
 
 function getTabulator(): TabulatorConstructor {
   if (!window.Tabulator) {
@@ -123,8 +121,8 @@ function schedule(callback: () => void): void {
 }
 
 function sortDirectionToAria(direction?: string): string {
-  if (direction === "asc") return "ascending";
-  if (direction === "desc") return "descending";
+  if (direction === "asc") return "sorted ascending";
+  if (direction === "desc") return "sorted descending";
   return "none";
 }
 
@@ -144,31 +142,50 @@ function syncHeaderAriaSort<T extends DataRecord>(table: TabulatorTable<T>, cont
 
   container.querySelectorAll<HTMLElement>(".tabulator-col.tabulator-sortable").forEach((header) => {
     const field = header.getAttribute("tabulator-field");
-    header.setAttribute("aria-sort", activeSorters.get(String(field)) || "none");
+    const title = header.querySelector(".tabulator-col-title")?.textContent?.trim()
+      || header.textContent?.trim()
+      || "";
+    const state = activeSorters.get(String(field));
+    if (title) header.setAttribute("aria-label", state ? `${title}, ${state}` : title);
+    header.removeAttribute("aria-sort");
+  });
+}
+
+function removeAriaFromGeneratedElement(element: HTMLElement): void {
+  element.removeAttribute("role");
+  Array.from(element.attributes).forEach((attribute) => {
+    if (attribute.name.startsWith("aria-")) element.removeAttribute(attribute.name);
+  });
+}
+
+function labelPaginationControls(container: Element): void {
+  container.querySelectorAll<HTMLSelectElement>(".tabulator-page-size").forEach((select) => {
+    select.setAttribute("aria-label", "Rows per page");
+  });
+
+  const buttonLabels: Record<string, string> = {
+    First: "First page",
+    Prev: "Previous page",
+    Next: "Next page",
+    Last: "Last page",
+  };
+
+  container.querySelectorAll<HTMLButtonElement>(".tabulator-page").forEach((button) => {
+    const text = button.textContent?.trim() || "";
+    button.setAttribute("aria-label", buttonLabels[text] || `Page ${text}`);
   });
 }
 
 function normalizeGeneratedTableAccessibility(container: Element): void {
-  container.querySelectorAll<HTMLElement>(".tabulator-row.tabulator-group").forEach((groupRow) => {
-    groupRow.removeAttribute("role");
-    const label = groupRow.textContent?.trim();
-    if (label) groupRow.setAttribute("aria-label", label);
-  });
-}
+  if (container instanceof HTMLElement) {
+    const hostLabel = container.getAttribute("aria-label") || "Data table";
+    removeAriaFromGeneratedElement(container);
+    container.setAttribute("role", "region");
+    container.setAttribute("aria-label", hostLabel);
+  }
 
-function observeGeneratedTableAccessibility(container: Element): void {
-  if (!(container instanceof HTMLElement) || typeof MutationObserver === "undefined") return;
-
-  const host = container as AccessibleTableHost;
-  if (host.__bizTrackAriaObserver) return;
-
-  host.__bizTrackAriaObserver = new MutationObserver(() => normalizeGeneratedTableAccessibility(container));
-  host.__bizTrackAriaObserver.observe(container, {
-    attributeFilter: ["role"],
-    attributes: true,
-    childList: true,
-    subtree: true,
-  });
+  container.querySelectorAll<HTMLElement>(TABULATOR_ARIA_SELECTOR).forEach(removeAriaFromGeneratedElement);
+  labelPaginationControls(container);
 }
 
 function enhanceSortableHeaders<T extends DataRecord>(table: TabulatorTable<T>, selector: string): void {
@@ -176,16 +193,15 @@ function enhanceSortableHeaders<T extends DataRecord>(table: TabulatorTable<T>, 
   if (!container) return;
 
   normalizeGeneratedTableAccessibility(container);
-  observeGeneratedTableAccessibility(container);
 
   container.querySelectorAll<HTMLElement>(".tabulator-col.tabulator-sortable").forEach((header) => {
     const headerLabel = header.querySelector(".tabulator-col-title")?.textContent?.trim()
       || header.textContent?.trim()
       || "";
     if (headerLabel) header.setAttribute("aria-label", headerLabel);
+    header.setAttribute("role", "button");
     header.setAttribute("tabindex", "0");
     header.setAttribute("aria-keyshortcuts", "Enter Space");
-    if (!header.hasAttribute("aria-sort")) header.setAttribute("aria-sort", "none");
 
     if (header.dataset.bizTrackKeyboardSort === "true") return;
     header.dataset.bizTrackKeyboardSort = "true";
@@ -209,6 +225,8 @@ function scheduleHeaderEnhancement<T extends DataRecord>(table: TabulatorTable<T
   schedule(enhance);
   window.setTimeout(enhance, 50);
   window.setTimeout(enhance, 250);
+  window.setTimeout(enhance, 750);
+  window.setTimeout(enhance, 1500);
 }
 
 function createOrUpdateTable<T extends DataRecord>(
