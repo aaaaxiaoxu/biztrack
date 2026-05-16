@@ -153,7 +153,6 @@ function enhanceSortableHeaders<T extends DataRecord>(table: TabulatorTable<T>, 
       || header.textContent?.trim()
       || "";
     if (headerLabel) header.setAttribute("aria-label", headerLabel);
-    if (!header.hasAttribute("role")) header.setAttribute("role", "columnheader");
     header.setAttribute("tabindex", "0");
     header.setAttribute("aria-keyshortcuts", "Enter Space");
     if (!header.hasAttribute("aria-sort")) header.setAttribute("aria-sort", "none");
