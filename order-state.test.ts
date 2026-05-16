@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import orderState from "./order-state.js";
+import orderState from "./order-state";
 
 describe("BizTrackOrderState", () => {
   it("allows each workflow state to stay unchanged or move one step forward", () => {

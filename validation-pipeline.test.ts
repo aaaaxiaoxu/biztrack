@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
-import validation from "./validation-pipeline.js";
+import validation from "./validation-pipeline";
+
+interface ValidationTestValues extends Record<string, unknown> {
+  name: string;
+  amount: string | number;
+  total?: number;
+}
 
 describe("BizTrackValidation", () => {
   it("runs validators in order and returns transformed values", () => {
-    const validate = validation.createPipeline([
+    const validate = validation.createPipeline<ValidationTestValues>([
       validation.requiredField("name", "Name"),
       validation.nonNegativeNumber("amount", "Amount"),
-      validation.custom((values) => ({ total: values.amount * 2 })),
+      validation.custom((values) => ({ total: Number(values.amount) * 2 })),
     ]);
 
     expect(validate({ name: "Rent", amount: "12.50" })).toEqual({
@@ -17,7 +23,7 @@ describe("BizTrackValidation", () => {
   });
 
   it("throws for missing required fields and invalid numbers", () => {
-    const validate = validation.createPipeline([
+    const validate = validation.createPipeline<ValidationTestValues>([
       validation.requiredField("name", "Name"),
       validation.nonNegativeNumber("amount", "Amount"),
     ]);

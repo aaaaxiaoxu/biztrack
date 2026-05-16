@@ -4,12 +4,15 @@
   "private": true,
   "description": "Small-business dashboard with accessible, multilingual, privacy-aware enhancements.",
   "scripts": {
+    "build": "tsc --noEmit && vite build",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
     "serve": "vite --host 127.0.0.1"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.5",
+    "typescript": "^6.0.3",
     "vite": "^8.0.12",
     "vitest": "^4.1.5"
   }

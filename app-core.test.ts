@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import core from "./app-core.js";
+import core from "./app-core";
 
-function storageWith(value) {
+function storageWith(value: string | null) {
   return {
     getItem() {
       return value;

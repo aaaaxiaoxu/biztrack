@@ -1,15 +1,21 @@
 import { describe, expect, it } from "vitest";
-import repository from "./repository.js";
+import repository from "./repository";
 
-function memoryStorage(initialValue) {
+interface TestItem extends Record<string, unknown> {
+  id: string;
+  amount?: string | number;
+  name?: string;
+}
+
+function memoryStorage(initialValue?: string) {
   const data = new Map();
   if (initialValue !== undefined) data.set("items", initialValue);
 
   return {
-    getItem(key) {
+    getItem(key: string) {
       return data.has(key) ? data.get(key) : null;
     },
-    setItem(key, value) {
+    setItem(key: string, value: string) {
       data.set(key, value);
     },
   };
@@ -18,7 +24,7 @@ function memoryStorage(initialValue) {
 describe("BizTrackRepository", () => {
   it("falls back to defaults and persists normalized records when storage is corrupt", () => {
     const storage = memoryStorage("{bad json");
-    const repo = repository.createLocalStorageRepository({
+    const repo = repository.createLocalStorageRepository<TestItem>({
       storage,
       key: "items",
       defaults: [{ id: "1", amount: "2" }],
@@ -31,7 +37,7 @@ describe("BizTrackRepository", () => {
   });
 
   it("supports id-based add, update, remove, find, and duplicate checks", () => {
-    const repo = repository.createLocalStorageRepository({
+    const repo = repository.createLocalStorageRepository<TestItem>({
       storage: memoryStorage("[]"),
       key: "items",
       defaults: [],

@@ -1,29 +1,37 @@
-// SIDEBAR TOGGLE
+import core from "./app-core";
+import "./common";
+import tables from "./data-table";
+import type {
+  EChartOptions,
+  EChartsInstance,
+  I18nParams,
+  Order,
+  Product,
+  SummaryRow,
+  TableColumn,
+  TabulatorTable,
+  Transaction,
+} from "./types";
 
-function openSidebar() {
-  var side = document.getElementById('sidebar');
-  side.style.display = (side.style.display === "block") ? "none" : "block";
+interface DashboardData {
+  products: Product[];
+  expenses: Transaction[];
+  orders: Order[];
 }
 
-function closeSidebar() {
-  document.getElementById('sidebar').style.display = 'none';
-}
+let salesChart: EChartsInstance | undefined;
+let expensesChart: EChartsInstance | undefined;
+let trendChart: EChartsInstance | undefined;
+let summaryTable: TabulatorTable<SummaryRow> | null = null;
 
-const core = window.BizTrackCore;
-const tables = window.BizTrackTables;
-let salesChart;
-let expensesChart;
-let trendChart;
-let summaryTable;
-
-const defaultProducts = [
+const defaultProducts: Product[] = [
   {
     prodID: "PD001",
     prodName: "Baseball caps",
     prodDesc: "Peace embroidered cap",
     prodCat: "Hats",
     prodPrice: 25.00,
-    prodSold: 20
+    prodSold: 20,
   },
   {
     prodID: "PD002",
@@ -31,7 +39,7 @@ const defaultProducts = [
     prodDesc: "Floral lotus printed bottle",
     prodCat: "Drinkware",
     prodPrice: 48.50,
-    prodSold: 10
+    prodSold: 10,
   },
   {
     prodID: "PD003",
@@ -39,7 +47,7 @@ const defaultProducts = [
     prodDesc: "Palestine sweater",
     prodCat: "Clothing",
     prodPrice: 17.50,
-    prodSold: 70
+    prodSold: 70,
   },
   {
     prodID: "PD004",
@@ -47,7 +55,7 @@ const defaultProducts = [
     prodDesc: "Vibes printed poster",
     prodCat: "Home decor",
     prodPrice: 12.00,
-    prodSold: 60
+    prodSold: 60,
   },
   {
     prodID: "PD005",
@@ -55,49 +63,49 @@ const defaultProducts = [
     prodDesc: "Morrocan print pillow case",
     prodCat: "Accessories",
     prodPrice: 17.00,
-    prodSold: 40
+    prodSold: 40,
   },
 ];
 
-const defaultExpenses = [
+const defaultExpenses: Transaction[] = [
   {
     trID: 1,
     trDate: "2024-01-05",
     trCategory: "Rent",
     trAmount: 100.00,
-    trNotes: "January Rent"
+    trNotes: "January Rent",
   },
   {
     trID: 2,
     trDate: "2024-01-15",
     trCategory: "Order Fulfillment",
     trAmount: 35.00,
-    trNotes: "Order #1005"
+    trNotes: "Order #1005",
   },
   {
     trID: 3,
     trDate: "2024-01-08",
     trCategory: "Utilities",
     trAmount: 120.00,
-    trNotes: "Internet"
+    trNotes: "Internet",
   },
   {
     trID: 4,
     trDate: "2024-02-05",
     trCategory: "Supplies",
     trAmount: 180.00,
-    trNotes: "Embroidery Machine"
+    trNotes: "Embroidery Machine",
   },
   {
     trID: 5,
     trDate: "2024-01-25",
     trCategory: "Miscellaneous",
     trAmount: 20.00,
-    trNotes: "Pizza"
+    trNotes: "Pizza",
   },
 ];
 
-const defaultOrders = [
+const defaultOrders: Order[] = [
   {
     orderID: "1001",
     orderDate: "2024-01-05",
@@ -107,7 +115,7 @@ const defaultOrders = [
     shipping: 2.50,
     taxes: 9.00,
     orderTotal: 61.50,
-    orderStatus: "Pending"
+    orderStatus: "Pending",
   },
   {
     orderID: "1002",
@@ -118,7 +126,7 @@ const defaultOrders = [
     shipping: 3.50,
     taxes: 6.00,
     orderTotal: 60.50,
-    orderStatus: "Processing"
+    orderStatus: "Processing",
   },
   {
     orderID: "1003",
@@ -129,7 +137,7 @@ const defaultOrders = [
     shipping: 2.50,
     taxes: 2.00,
     orderTotal: 84.50,
-    orderStatus: "Shipped"
+    orderStatus: "Shipped",
   },
   {
     orderID: "1004",
@@ -140,7 +148,7 @@ const defaultOrders = [
     shipping: 2.50,
     taxes: 19.00,
     orderTotal: 76.50,
-    orderStatus: "Delivered"
+    orderStatus: "Delivered",
   },
   {
     orderID: "1005",
@@ -151,52 +159,67 @@ const defaultOrders = [
     shipping: 3.90,
     taxes: 4.00,
     orderTotal: 37.90,
-    orderStatus: "Pending"
+    orderStatus: "Pending",
   },
 ];
 
-function dashboardT(key, params) {
+function getElement<T extends HTMLElement>(id: string): T | null {
+  return document.getElementById(id) as T | null;
+}
+
+function openSidebar(): void {
+  const side = getElement<HTMLElement>("sidebar");
+  if (!side) return;
+  side.style.display = side.style.display === "block" ? "none" : "block";
+}
+
+function closeSidebar(): void {
+  const sidebar = getElement<HTMLElement>("sidebar");
+  if (sidebar) sidebar.style.display = "none";
+}
+
+function dashboardT(key: string, params?: I18nParams): string {
   return window.BizTrackI18n?.useDashboardI18n().t(key, params)
     || window.BizTrackI18n?.useCommonI18n().t(key, params)
     || key;
 }
 
-function getDashboardData() {
+function getDashboardData(): DashboardData {
   return {
-    products: core.parseStoredArray(localStorage, "bizTrackProducts", defaultProducts),
-    expenses: core.parseStoredArray(localStorage, "bizTrackTransactions", defaultExpenses),
-    orders: core.parseStoredArray(localStorage, "bizTrackOrders", defaultOrders),
+    products: core.parseStoredArray<Product>(localStorage, "bizTrackProducts", defaultProducts),
+    expenses: core.parseStoredArray<Transaction>(localStorage, "bizTrackTransactions", defaultExpenses),
+    orders: core.parseStoredArray<Order>(localStorage, "bizTrackOrders", defaultOrders),
   };
 }
 
-function renderDashboard() {
+function renderDashboard(): void {
   const data = getDashboardData();
   renderDashboardMetrics(data);
   initializeChart(data);
   renderSummaryPivot(data);
 }
 
-function renderDashboardMetrics(data = getDashboardData()) {
+function renderDashboardMetrics(data = getDashboardData()): void {
   const totalExpenses = calculateExpTotal(data.expenses);
   const totalRevenues = calculateRevTotal(data.orders);
   const totalBalance = totalRevenues - totalExpenses;
   const numOrders = data.orders.length;
 
-  renderMetric(document.getElementById('rev-amount'), "Revenue", formatCurrency(totalRevenues));
-  renderMetric(document.getElementById('exp-amount'), "Expenses", formatCurrency(totalExpenses));
-  renderMetric(document.getElementById('balance'), "Balance", formatCurrency(totalBalance));
-  renderMetric(document.getElementById('num-orders'), "Orders", numOrders);
+  renderMetric(getElement("rev-amount"), "Revenue", formatCurrency(totalRevenues));
+  renderMetric(getElement("exp-amount"), "Expenses", formatCurrency(totalExpenses));
+  renderMetric(getElement("balance"), "Balance", formatCurrency(totalBalance));
+  renderMetric(getElement("num-orders"), "Orders", numOrders);
 }
 
-function calculateExpTotal(transactions) {
+function calculateExpTotal(transactions: Transaction[]): number {
   return core.sumBy(transactions, "trAmount");
 }
 
-function calculateRevTotal(orders) {
+function calculateRevTotal(orders: Order[]): number {
   return core.sumBy(orders, "orderTotal");
 }
 
-function renderMetric(container, title, value) {
+function renderMetric(container: HTMLElement | null, title: string, value: string | number): void {
   if (!container) return;
 
   container.replaceChildren();
@@ -205,14 +228,12 @@ function renderMetric(container, title, value) {
   titleSpan.textContent = dashboardT(title);
   const valueSpan = document.createElement("span");
   valueSpan.className = "amount-value";
-  valueSpan.textContent = value;
+  valueSpan.textContent = String(value);
   container.append(titleSpan, valueSpan);
 }
 
-// ---------- CHARTS ----------
-
-function calculateCategorySales(products) {
-  return products.reduce((categorySales, product) => {
+function calculateCategorySales(products: Product[]): Record<string, number> {
+  return products.reduce<Record<string, number>>((categorySales, product) => {
     const category = product.prodCat;
     categorySales[category] = (categorySales[category] || 0)
       + core.toFiniteNumber(product.prodPrice) * core.toFiniteNumber(product.prodSold);
@@ -220,49 +241,56 @@ function calculateCategorySales(products) {
   }, {});
 }
 
-function calculateCategoryExpenses(transactions) {
-  return transactions.reduce((categoryExpenses, transaction) => {
+function calculateCategoryExpenses(transactions: Transaction[]): Record<string, number> {
+  return transactions.reduce<Record<string, number>>((categoryExpenses, transaction) => {
     const category = transaction.trCategory;
     categoryExpenses[category] = (categoryExpenses[category] || 0) + core.toFiniteNumber(transaction.trAmount);
     return categoryExpenses;
   }, {});
 }
 
-function calculateCategoryUnits(products) {
-  return products.reduce((categoryUnits, product) => {
+function calculateCategoryUnits(products: Product[]): Record<string, number> {
+  return products.reduce<Record<string, number>>((categoryUnits, product) => {
     const category = product.prodCat;
     categoryUnits[category] = (categoryUnits[category] || 0) + core.toFiniteNumber(product.prodSold);
     return categoryUnits;
   }, {});
 }
 
-function calculateCategoryCounts(items, categoryKey) {
-  return items.reduce((counts, item) => {
-    const category = item[categoryKey];
+function calculateCategoryCounts<T extends Record<string, unknown>>(
+  items: T[],
+  categoryKey: keyof T & string,
+): Record<string, number> {
+  return items.reduce<Record<string, number>>((counts, item) => {
+    const category = String(item[categoryKey] ?? "");
     counts[category] = (counts[category] || 0) + 1;
     return counts;
   }, {});
 }
 
-function sortedEntries(data) {
+function sortedEntries(data: Record<string, number>): Array<[string, number]> {
   return Object.entries(data).sort(([, a], [, b]) => b - a);
 }
 
-function formatCurrency(value) {
+function formatCurrency(value: unknown): string {
   return tables?.formatCurrency(value) || `$${Number(value || 0).toFixed(2)}`;
 }
 
-function formatPercent(value) {
+function formatPercent(value: unknown): string {
   const number = Number(value);
   return Number.isFinite(number) ? `${number.toFixed(1)}%` : "";
 }
 
-function chartColors() {
+function chartColors(): string[] {
   return ["#249672", "#247BA0", "#e49273", "#A37A74", "#9AADBF", "#634844"];
 }
 
-function renderEChart(currentChart, elementId, options) {
-  const element = document.getElementById(elementId);
+function renderEChart(
+  currentChart: EChartsInstance | undefined,
+  elementId: string,
+  options: EChartOptions,
+): EChartsInstance | undefined {
+  const element = getElement<HTMLElement>(elementId);
   if (!element || !window.echarts) return currentChart;
 
   if (currentChart) currentChart.dispose();
@@ -271,13 +299,13 @@ function renderEChart(currentChart, elementId, options) {
   return chart;
 }
 
-function initializeChart(data = getDashboardData()) {
+function initializeChart(data = getDashboardData()): void {
   renderSalesChart(data.products);
   renderExpensesChart(data.expenses);
   renderTrendChart(data.orders, data.expenses);
 }
 
-function renderSalesChart(products) {
+function renderSalesChart(products: Product[]): void {
   const entries = sortedEntries(calculateCategorySales(products));
 
   salesChart = renderEChart(salesChart, "bar-chart", {
@@ -304,7 +332,7 @@ function renderSalesChart(products) {
       type: "value",
       name: dashboardT("Total Sales ($)"),
       axisLabel: {
-        formatter(value) {
+        formatter(value: unknown) {
           return `$${value}`;
         },
       },
@@ -323,7 +351,7 @@ function renderSalesChart(products) {
   });
 }
 
-function renderExpensesChart(expenses) {
+function renderExpensesChart(expenses: Transaction[]): void {
   const entries = sortedEntries(calculateCategoryExpenses(expenses));
 
   expensesChart = renderEChart(expensesChart, "donut-chart", {
@@ -357,7 +385,7 @@ function renderExpensesChart(expenses) {
   });
 }
 
-function renderTrendChart(orders, expenses) {
+function renderTrendChart(orders: Order[], expenses: Transaction[]): void {
   const revenueByMonth = groupAmountByMonth(orders, "orderDate", "orderTotal");
   const expensesByMonth = groupAmountByMonth(expenses, "trDate", "trAmount");
   const months = Array.from(new Set([
@@ -388,7 +416,7 @@ function renderTrendChart(orders, expenses) {
     yAxis: {
       type: "value",
       axisLabel: {
-        formatter(value) {
+        formatter(value: unknown) {
           return `$${value}`;
         },
       },
@@ -410,21 +438,23 @@ function renderTrendChart(orders, expenses) {
   });
 }
 
-function groupAmountByMonth(items, dateKey, amountKey) {
-  return items.reduce((months, item) => {
+function groupAmountByMonth<T extends Record<string, unknown>>(
+  items: T[],
+  dateKey: keyof T & string,
+  amountKey: keyof T & string,
+): Record<string, number> {
+  return items.reduce<Record<string, number>>((months, item) => {
     const month = String(item[dateKey] || "Unknown").slice(0, 7);
     months[month] = (months[month] || 0) + core.toFiniteNumber(item[amountKey]);
     return months;
   }, {});
 }
 
-function resizeDashboardCharts() {
+function resizeDashboardCharts(): void {
   [salesChart, expensesChart, trendChart].forEach((chart) => chart?.resize());
 }
 
-// ---------- SUMMARY / PIVOT TABLE ----------
-
-function buildSummaryPivotRows(data) {
+function buildSummaryPivotRows(data: DashboardData): SummaryRow[] {
   const salesByCategory = calculateCategorySales(data.products);
   const unitsByCategory = calculateCategoryUnits(data.products);
   const productCounts = calculateCategoryCounts(data.products, "prodCat");
@@ -433,7 +463,7 @@ function buildSummaryPivotRows(data) {
   const totalSales = Object.values(salesByCategory).reduce((total, value) => total + value, 0);
   const totalExpenses = calculateExpTotal(data.expenses);
 
-  const salesRows = Object.keys(salesByCategory).map((category) => {
+  const salesRows: SummaryRow[] = Object.keys(salesByCategory).map((category) => {
     const revenue = salesByCategory[category];
     return {
       section: "Sales",
@@ -447,7 +477,7 @@ function buildSummaryPivotRows(data) {
     };
   });
 
-  const expenseRows = Object.keys(expensesByCategory).map((category) => {
+  const expenseRows: SummaryRow[] = Object.keys(expensesByCategory).map((category) => {
     const expenseAmount = expensesByCategory[category];
     return {
       section: "Expenses",
@@ -464,10 +494,10 @@ function buildSummaryPivotRows(data) {
   return [...salesRows, ...expenseRows];
 }
 
-function buildSummaryColumns() {
+function buildSummaryColumns(): TableColumn<SummaryRow>[] {
   return [
-    tables.plainTextColumn(dashboardT("Type"), "section", { visible: false }),
-    tables.plainTextColumn(dashboardT("Category"), "category"),
+    tables.plainTextColumn<SummaryRow>(dashboardT("Type"), "section", { visible: false }),
+    tables.plainTextColumn<SummaryRow>(dashboardT("Category"), "category"),
     {
       title: dashboardT("Records"),
       field: "records",
@@ -534,7 +564,7 @@ function buildSummaryColumns() {
   ];
 }
 
-function renderSummaryPivot(data = getDashboardData()) {
+function renderSummaryPivot(data = getDashboardData()): void {
   if (!document.getElementById("summary-pivot-table")) return;
 
   if (summaryTable) {
@@ -554,6 +584,9 @@ function renderSummaryPivot(data = getDashboardData()) {
     placeholder: dashboardT("No summary data"),
   });
 }
+
+window.openSidebar = openSidebar;
+window.closeSidebar = closeSidebar;
 
 window.addEventListener("DOMContentLoaded", renderDashboard);
 window.addEventListener("resize", resizeDashboardCharts);
