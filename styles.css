@@ -2,13 +2,13 @@
 
 :root {
     --black-color: #262626;
-    --blue-color: #247BA0;
+    --blue-color: #1e6684;
     --orange-color: #e49273;
-    --brown-color: #A37A74;
+    --brown-color: #7a554f;
     --light-blue: #9AADBF;
     --light-orange: #FFF5EE;
     --white-color: #f2f4f7;
-    --green-color: #249672;
+    --green-color: #176b52;
 }
 * {
     margin: 0;
@@ -66,9 +66,7 @@ body {
     color: var(--orange-color);
 }
 .logo a {
-    background: linear-gradient(to right, var(--green-color), var(--light-blue), var(--light-orange), var(--orange-color), var(--brown-color), var(--light-blue), var(--green-color));
-    background-clip: text;   
-    -webkit-text-fill-color: transparent;
+    color: var(--white-color);
     text-decoration: none;
     display: flex;
     align-items: first baseline;
@@ -84,6 +82,7 @@ body {
     animation-play-state: paused;
 }
 .logo a i {
+    color: #33d8a4;
     font-size: 20px;
 }
 .menu {
@@ -100,7 +99,7 @@ body {
 }
 .menu li:hover, 
 .active {
-    background: var(--orange-color);
+    background: #a94328;
 }
 .menu a {
     color: var(--white-color);
@@ -299,11 +298,11 @@ label {
     cursor: pointer;
     width: 30%;
     margin-bottom:10px;
-    opacity: 0.8;
+    opacity: 1;
     font-size: 15px;
 }
 .form-container .cancel {
-    background-color: var(--orange-color);
+    background-color: #a94328;
 }
 .form-container .btn:hover, .open-button:hover {
     opacity: 1;
@@ -359,6 +358,7 @@ label {
     flex-direction: column;
 }
 .title {
+    color: var(--black-color);
     font-size: 12px;
     font-weight: 500;
 }
@@ -379,7 +379,7 @@ label {
 }
 .card-detail {
     font-size: 17px;
-    color: #63484460;
+    color: #5f4541;
     letter-spacing: 2px;
     font-family: 'Courier New', Courier, monospace;
 }
@@ -475,9 +475,10 @@ label {
     margin: 0 2px;
     padding: 0.35rem 0.55rem;
 }
-.biztrack-data-table .tabulator-page.active {
+.biztrack-data-table .tabulator .tabulator-footer .tabulator-page.active {
     background: var(--green-color);
-    color: var(--white-color);
+    border-color: var(--green-color);
+    color: var(--white-color) !important;
 }
 .biztrack-data-table .tabulator-group {
     background: #eef4f7;
@@ -552,11 +553,11 @@ tfoot td {
     color: var(--orange-color);
 }
 .tr-amount {
-    color: #e8754c;
+    color: #9a341c;
     font-weight: 700;
 }
 .order-total {
-    color: #38b48d;
+    color: var(--green-color);
     font-weight: 700;
 }
 .status {
@@ -578,7 +579,7 @@ tfoot td {
 }
 .delivered {
     background: #9AADBF30;
-    color: #63484460;
+    color: #4f3935;
 }
 
 .edit-icon{
@@ -619,7 +620,7 @@ tfoot td {
     font-weight: 700;
 }
 .summary-money.negative {
-    color: #d95d39;
+    color: #9a341c;
     font-weight: 700;
 }
 #bar-chart,

@@ -289,13 +289,16 @@ function renderEChart(
   currentChart: EChartsInstance | undefined,
   elementId: string,
   options: EChartOptions,
+  accessibleLabel: string,
 ): EChartsInstance | undefined {
   const element = getElement<HTMLElement>(elementId);
   if (!element || !window.echarts) return currentChart;
 
   if (currentChart) currentChart.dispose();
+  element.setAttribute("role", "img");
+  element.setAttribute("aria-label", accessibleLabel);
   const chart = window.echarts.init(element);
-  chart.setOption(options);
+  chart.setOption({ aria: { enabled: true }, ...options });
   return chart;
 }
 
@@ -348,7 +351,7 @@ function renderSalesChart(products: Product[]): void {
         },
       },
     ],
-  });
+  }, dashboardT("Sales by Product Category"));
 }
 
 function renderExpensesChart(expenses: Transaction[]): void {
@@ -382,7 +385,7 @@ function renderExpensesChart(expenses: Transaction[]): void {
         })),
       },
     ],
-  });
+  }, dashboardT("Expenses"));
 }
 
 function renderTrendChart(orders: Order[], expenses: Transaction[]): void {
@@ -435,7 +438,7 @@ function renderTrendChart(orders: Order[], expenses: Transaction[]): void {
         data: months.map((month) => Number((expensesByMonth[month] || 0).toFixed(2))),
       },
     ],
-  });
+  }, dashboardT("revenueVsExpensesTrend"));
 }
 
 function groupAmountByMonth<T extends Record<string, unknown>>(
@@ -565,7 +568,9 @@ function buildSummaryColumns(): TableColumn<SummaryRow>[] {
 }
 
 function renderSummaryPivot(data = getDashboardData()): void {
-  if (!document.getElementById("summary-pivot-table")) return;
+  const summaryElement = getElement<HTMLElement>("summary-pivot-table");
+  if (!summaryElement) return;
+  summaryElement.setAttribute("aria-label", dashboardT("performanceSummary"));
 
   if (summaryTable) {
     summaryTable.destroy();

@@ -10,6 +10,10 @@ import type {
   TabulatorTable,
 } from "./types";
 
+type AccessibleTableHost = HTMLElement & {
+  __bizTrackAriaObserver?: MutationObserver;
+};
+
 function getTabulator(): TabulatorConstructor {
   if (!window.Tabulator) {
     throw new Error("Tabulator is not loaded. Check the Tabulator script tag before the page script.");
@@ -144,9 +148,35 @@ function syncHeaderAriaSort<T extends DataRecord>(table: TabulatorTable<T>, cont
   });
 }
 
+function normalizeGeneratedTableAccessibility(container: Element): void {
+  container.querySelectorAll<HTMLElement>(".tabulator-row.tabulator-group").forEach((groupRow) => {
+    groupRow.removeAttribute("role");
+    const label = groupRow.textContent?.trim();
+    if (label) groupRow.setAttribute("aria-label", label);
+  });
+}
+
+function observeGeneratedTableAccessibility(container: Element): void {
+  if (!(container instanceof HTMLElement) || typeof MutationObserver === "undefined") return;
+
+  const host = container as AccessibleTableHost;
+  if (host.__bizTrackAriaObserver) return;
+
+  host.__bizTrackAriaObserver = new MutationObserver(() => normalizeGeneratedTableAccessibility(container));
+  host.__bizTrackAriaObserver.observe(container, {
+    attributeFilter: ["role"],
+    attributes: true,
+    childList: true,
+    subtree: true,
+  });
+}
+
 function enhanceSortableHeaders<T extends DataRecord>(table: TabulatorTable<T>, selector: string): void {
   const container = document.querySelector(selector);
   if (!container) return;
+
+  normalizeGeneratedTableAccessibility(container);
+  observeGeneratedTableAccessibility(container);
 
   container.querySelectorAll<HTMLElement>(".tabulator-col.tabulator-sortable").forEach((header) => {
     const headerLabel = header.querySelector(".tabulator-col-title")?.textContent?.trim()
@@ -175,7 +205,10 @@ function enhanceSortableHeaders<T extends DataRecord>(table: TabulatorTable<T>, 
 }
 
 function scheduleHeaderEnhancement<T extends DataRecord>(table: TabulatorTable<T>, selector: string): void {
-  schedule(() => enhanceSortableHeaders(table, selector));
+  const enhance = () => enhanceSortableHeaders(table, selector);
+  schedule(enhance);
+  window.setTimeout(enhance, 50);
+  window.setTimeout(enhance, 250);
 }
 
 function createOrUpdateTable<T extends DataRecord>(
@@ -215,6 +248,7 @@ function createOrUpdateTable<T extends DataRecord>(
       }
     });
     nextTable.on("dataSorted", () => scheduleHeaderEnhancement(nextTable, selector));
+    scheduleHeaderEnhancement(nextTable, selector);
     return nextTable;
   }
 

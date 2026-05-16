@@ -30,14 +30,19 @@ function bindSidebarControls(): void {
   });
 }
 
+function hideDecorativeIcons(): void {
+  document
+    .querySelectorAll<HTMLElement>(".logo a i, .menu a i, .menu-icon i, .payment-card .icon, .search-box i")
+    .forEach((icon) => icon.setAttribute("aria-hidden", "true"));
+}
+
 function enhanceKeyboardAccess(): void {
   document.querySelectorAll<HTMLElement>("[data-sidebar-toggle], [data-sidebar-close]").forEach((element) => {
+    const labelKey = element.matches("[data-sidebar-toggle]") ? "Open navigation" : "Close navigation";
     if (!element.hasAttribute("tabindex")) element.setAttribute("tabindex", "0");
     if (!element.hasAttribute("role")) element.setAttribute("role", "button");
-    if (!element.hasAttribute("aria-label")) {
-      const defaultLabel = element.matches("[data-sidebar-toggle]") ? "Open navigation" : "Control";
-      element.setAttribute("aria-label", element.textContent?.trim() || element.getAttribute("title") || defaultLabel);
-    }
+    element.setAttribute("data-i18n-aria-label", `common.${labelKey}`);
+    element.setAttribute("aria-label", commonT(labelKey));
     element.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
@@ -189,6 +194,7 @@ function injectCookieBanner(): void {
 
 window.addEventListener("DOMContentLoaded", async () => {
   bindSidebarControls();
+  hideDecorativeIcons();
   injectLanguageToggle();
   injectCookieBanner();
   enhanceKeyboardAccess();
