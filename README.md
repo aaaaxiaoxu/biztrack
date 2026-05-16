@@ -30,7 +30,9 @@ Please refer to --- https://biztrack-6tl.pages.dev/.
 
 ```bash
 npm install
+npm run typecheck
 npm test
+npm run build
 ```
 
 Current Istanbul coverage from `npm test`:
@@ -39,6 +41,15 @@ Current Istanbul coverage from `npm test`:
 - Branches: 88.88%
 - Functions: 100%
 - Lines: 97.22%
+
+## 🚀 Cloudflare Pages Deployment
+
+This project uses Vite to compile TypeScript before deployment. Configure Cloudflare Pages with:
+
+- Build command: `npm run build`
+- Build output directory: `dist`
+
+Do not deploy the repository root directly after the TypeScript migration. The HTML source files reference TypeScript entry points for local Vite development, and browsers need the compiled JavaScript assets generated in `dist`. Locale files live under `public/locales` so Vite copies them to `dist/locales` for runtime translation loading.
 
 ## 💪🏾 Motivation
 
@@ -52,7 +63,8 @@ This project represents my growth, determination, and love for coding. I hope yo
 
 - HTML
 - CSS
-- JavaScript
+- TypeScript
+- Vite
 - Tabulator
 - ECharts
 
