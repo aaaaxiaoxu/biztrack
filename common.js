@@ -5,12 +5,34 @@
     return window.BizTrackI18n?.useCommonI18n().t(key, params) || key;
   }
 
+  function toggleSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    if (!sidebar) return;
+    sidebar.style.display = sidebar.style.display === "block" ? "none" : "block";
+  }
+
+  function closeSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    if (sidebar) sidebar.style.display = "none";
+  }
+
+  function bindSidebarControls() {
+    document.querySelectorAll("[data-sidebar-toggle]").forEach((element) => {
+      element.addEventListener("click", toggleSidebar);
+    });
+
+    document.querySelectorAll("[data-sidebar-close]").forEach((element) => {
+      element.addEventListener("click", closeSidebar);
+    });
+  }
+
   function enhanceKeyboardAccess() {
-    document.querySelectorAll(".menu-icon, .fa-xmark, th[onclick]").forEach((element) => {
+    document.querySelectorAll("[data-sidebar-toggle], [data-sidebar-close]").forEach((element) => {
       if (!element.hasAttribute("tabindex")) element.setAttribute("tabindex", "0");
       if (!element.hasAttribute("role")) element.setAttribute("role", "button");
       if (!element.hasAttribute("aria-label")) {
-        element.setAttribute("aria-label", element.textContent.trim() || element.getAttribute("title") || "Control");
+        const defaultLabel = element.matches("[data-sidebar-toggle]") ? "Open navigation" : "Control";
+        element.setAttribute("aria-label", element.textContent.trim() || element.getAttribute("title") || defaultLabel);
       }
       element.addEventListener("keydown", (event) => {
         if (event.key === "Enter" || event.key === " ") {
@@ -162,6 +184,7 @@
   }
 
   window.addEventListener("DOMContentLoaded", async () => {
+    bindSidebarControls();
     injectLanguageToggle();
     injectCookieBanner();
     enhanceKeyboardAccess();

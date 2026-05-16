@@ -20,7 +20,7 @@
                 <i class="fas fa-b"></i>
                 <span>BizTrack</span>
             </a>
-            <i class="fa-solid fa-xmark" title="{{ t('common.Close') }}" onclick="closeSidebar()"></i>
+            <i class="fa-solid fa-xmark" title="{{ t('common.Close') }}" data-sidebar-close></i>
         </div>
         <ul class="menu">
             <li>
@@ -64,7 +64,7 @@
 
     <div class="main-content">
         <div class="header-wrapper">
-            <div class="menu-icon" onclick="openSidebar()">
+            <div class="menu-icon" data-sidebar-toggle>
                 <i class="fa-solid fa-bars"></i>
             </div>
             <div class="header-title">
@@ -84,13 +84,13 @@
             <div class="product-title">
                 <h3 class="main-title">{{ t("title") }}</h3>
                 <div class="finance-button">
-                    <button class="add-button" onclick="openForm()">{{ t("addExpense") }}</button>
-                    <button class="download-button" onclick="exportToCSV()">{{ t("exportCSV") }}</button>
+                    <button type="button" class="add-button" data-form-open>{{ t("addExpense") }}</button>
+                    <button type="button" class="download-button" data-export-csv>{{ t("exportCSV") }}</button>
                 </div>
             </div>
 
             <div class="form-popup">
-                <form class="form-container" id="transaction-form" onsubmit="addOrUpdate(event)">
+                <form class="form-container" id="transaction-form">
                     <div class="form-columns">
                             <input type="hidden" id="tr-id">
                             <label for="tr-date"><b>{{ t("common.Date:") }} </b></label>
@@ -115,7 +115,7 @@
                     
                     <div class="button-col">
                         <button type="submit" class="btn" id="submitBtn">{{ t("common.Add") }}</button>
-                        <button type="button" class="btn cancel" onclick="closeForm()">{{ t("common.Cancel") }}</button>
+                        <button type="button" class="btn cancel" data-form-close>{{ t("common.Cancel") }}</button>
                     </div>
                 </form>
             </div>

@@ -74,6 +74,66 @@
     };
   }
 
+  function schedule(callback) {
+    if (typeof root.requestAnimationFrame === "function") {
+      root.requestAnimationFrame(callback);
+      return;
+    }
+    root.setTimeout(callback, 0);
+  }
+
+  function sortDirectionToAria(direction) {
+    if (direction === "asc") return "ascending";
+    if (direction === "desc") return "descending";
+    return "none";
+  }
+
+  function getSorters(table) {
+    try {
+      return typeof table.getSorters === "function" ? table.getSorters() : [];
+    } catch (_error) {
+      return [];
+    }
+  }
+
+  function syncHeaderAriaSort(table, container) {
+    const activeSorters = new Map();
+    getSorters(table).forEach((sorter) => {
+      if (sorter?.field) activeSorters.set(String(sorter.field), sortDirectionToAria(sorter.dir));
+    });
+
+    container.querySelectorAll(".tabulator-col.tabulator-sortable").forEach((header) => {
+      const field = header.getAttribute("tabulator-field");
+      header.setAttribute("aria-sort", activeSorters.get(field) || "none");
+    });
+  }
+
+  function enhanceSortableHeaders(table, selector) {
+    const container = root.document?.querySelector(selector);
+    if (!container) return;
+
+    container.querySelectorAll(".tabulator-col.tabulator-sortable").forEach((header) => {
+      header.setAttribute("tabindex", "0");
+      if (!header.hasAttribute("aria-sort")) header.setAttribute("aria-sort", "none");
+
+      if (header.dataset.bizTrackKeyboardSort === "true") return;
+      header.dataset.bizTrackKeyboardSort = "true";
+      header.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+
+        event.preventDefault();
+        header.click();
+        schedule(() => syncHeaderAriaSort(table, container));
+      });
+    });
+
+    syncHeaderAriaSort(table, container);
+  }
+
+  function scheduleHeaderEnhancement(table, selector) {
+    schedule(() => enhanceSortableHeaders(table, selector));
+  }
+
   function createOrUpdateTable(table, selector, options) {
     ensureTabulator();
 
@@ -101,10 +161,12 @@
       nextTable.__bizTrackPendingSearch = "";
       nextTable.on("tableBuilt", () => {
         nextTable.__bizTrackBuilt = true;
+        scheduleHeaderEnhancement(nextTable, selector);
         if (nextTable.__bizTrackPendingSearch) {
           applyGlobalSearch(nextTable, nextTable.__bizTrackPendingSearch);
         }
       });
+      nextTable.on("dataSorted", () => scheduleHeaderEnhancement(nextTable, selector));
       return nextTable;
     }
 
@@ -114,6 +176,7 @@
       if (typeof table.setGroupHeader === "function") table.setGroupHeader(options.groupHeader);
     }
     table.replaceData(options.data);
+    scheduleHeaderEnhancement(table, selector);
     return table;
   }
 

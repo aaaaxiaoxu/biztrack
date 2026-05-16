@@ -75,7 +75,7 @@ function normalizeTransaction(transaction) {
     };
 }
 
-window.onload = function () {
+function init() {
     transactionRepository = repositories.createLocalStorageRepository({
         storage: localStorage,
         key: "bizTrackTransactions",
@@ -258,6 +258,13 @@ function performSearch() {
     tables.applyGlobalSearch(transactionTable, document.getElementById("searchInput").value);
 }
 
+function bindTransactionEvents() {
+    document.querySelector("[data-form-open]")?.addEventListener("click", openForm);
+    document.querySelector("[data-form-close]")?.addEventListener("click", closeForm);
+    document.querySelector("[data-export-csv]")?.addEventListener("click", exportToCSV);
+    document.getElementById("transaction-form")?.addEventListener("submit", addOrUpdate);
+}
+
 
 function exportToCSV() {
     const activeTransactions = tables.getActiveData(transactionTable, transactions);
@@ -293,3 +300,6 @@ window.addEventListener("biztrack:languagechange", () => {
     renderTransactions(transactions);
     setSubmitMode(document.getElementById("submitBtn").dataset.mode || "add");
 });
+
+bindTransactionEvents();
+init();

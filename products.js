@@ -259,6 +259,13 @@ function performSearch() {
   tables.applyGlobalSearch(productTable, document.getElementById("searchInput").value);
 }
 
+function bindProductEvents() {
+  document.querySelector("[data-form-open]")?.addEventListener("click", openForm);
+  document.querySelector("[data-form-close]")?.addEventListener("click", closeForm);
+  document.querySelector("[data-export-csv]")?.addEventListener("click", exportToCSV);
+  document.getElementById("product-form")?.addEventListener("submit", addOrUpdate);
+}
+
 
 function exportToCSV() {
   const activeProducts = tables.getActiveData(productTable, products);
@@ -296,4 +303,5 @@ window.addEventListener("biztrack:languagechange", () => {
   setSubmitMode(document.getElementById("submitBtn").dataset.mode || "add");
 });
 
+bindProductEvents();
 init();

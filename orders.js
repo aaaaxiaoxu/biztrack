@@ -106,7 +106,7 @@ function normalizeOrder(order) {
     };
 }
 
-window.onload = function () {
+function init() {
     orderRepository = repositories.createLocalStorageRepository({
         storage: localStorage,
         key: "bizTrackOrders",
@@ -391,6 +391,13 @@ function performSearch() {
     tables.applyGlobalSearch(orderTable, document.getElementById("searchInput").value);
 }
 
+function bindOrderEvents() {
+    document.querySelector("[data-form-open]")?.addEventListener("click", openForm);
+    document.querySelector("[data-form-close]")?.addEventListener("click", closeForm);
+    document.querySelector("[data-export-csv]")?.addEventListener("click", exportToCSV);
+    document.getElementById("order-form")?.addEventListener("submit", addOrUpdate);
+}
+
 
 function exportToCSV() {
     const activeOrders = tables.getActiveData(orderTable, orders);
@@ -434,3 +441,6 @@ window.addEventListener("biztrack:languagechange", () => {
         : null;
     setSubmitMode(mode, editingOrder?.orderStatus);
 });
+
+bindOrderEvents();
+init();
