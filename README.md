@@ -1,6 +1,6 @@
 # 📋 BizTrack Project
 
-![Istanbul coverage](https://img.shields.io/badge/Istanbul%20coverage-95.86%25-brightgreen)
+![Istanbul coverage](https://img.shields.io/badge/Istanbul%20coverage-96.15%25-brightgreen)
 
 BizTrack is a web app born from my experience running a small business. It’s a tool designed to simplify managing products, orders, and expenses seamlessly. As a small business owner, I created BizTrack to simplify the complexities of managing products, orders, and expenses. The inspiration for this project came from the challenges I faced in my own business. I wanted to develop a solution that could benefit “myself” and others in a similar situation.
 
@@ -37,10 +37,10 @@ npm run build
 
 Current Istanbul coverage from `npm test`:
 
-- Statements: 95.86%
+- Statements: 96.15%
 - Branches: 87.17%
-- Functions: 98.38%
-- Lines: 98.49%
+- Functions: 98.43%
+- Lines: 98.60%
 
 ## 🚀 Cloudflare Pages Deployment
 

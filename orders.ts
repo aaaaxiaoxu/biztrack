@@ -445,17 +445,7 @@ function exportToCSV(): void {
   });
 
   const csvContent = generateCSV(ordersToExport);
-
-  const blob = new Blob([csvContent], { type: "text/csv" });
-
-  const link = document.createElement("a");
-  link.href = window.URL.createObjectURL(blob);
-  link.download = "biztrack_order_table.csv";
-
-  document.body.appendChild(link);
-  link.click();
-
-  document.body.removeChild(link);
+  core.downloadCSVFile(csvContent, "biztrack_order_table.csv");
 }
 
 function generateCSV(data: Parameters<typeof core.generateCSV>[0]): string {

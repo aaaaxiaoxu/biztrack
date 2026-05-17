@@ -63,6 +63,22 @@ function generateCSV(data: CsvRecord[]): string {
   return `${headers.join(",")}\n${rows.join("\n")}`;
 }
 
+function downloadCSVFile(csvContent: string, filename: string): void {
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = objectUrl;
+  link.download = filename;
+  link.style.display = "none";
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+}
+
 const core: BizTrackCore = {
   parseStoredArray,
   toFiniteNumber,
@@ -72,6 +88,7 @@ const core: BizTrackCore = {
   nextTransactionId,
   escapeCsvValue,
   generateCSV,
+  downloadCSVFile,
 };
 
 (globalThis as typeof globalThis & { BizTrackCore: BizTrackCore }).BizTrackCore = core;
@@ -81,6 +98,7 @@ export {
   calculateOrderTotal,
   escapeCsvValue,
   generateCSV,
+  downloadCSVFile,
   nextTransactionId,
   parseStoredArray,
   sumBy,

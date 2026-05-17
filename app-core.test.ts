@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import core from "./app-core";
 
 function storageWith(value: string | null) {
@@ -10,6 +10,11 @@ function storageWith(value: string | null) {
 }
 
 describe("BizTrackCore", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
   it("loads valid stored arrays and falls back for corrupted localStorage", () => {
     const fallback = [{ id: 1 }];
 
@@ -44,5 +49,54 @@ describe("BizTrackCore", () => {
     expect(csv).toContain('"hello, ""world"""');
     expect(csv).toContain('"line\nbreak"');
     expect(core.generateCSV([])).toBe("");
+  });
+
+  it("downloads CSV files and revokes the generated object URL", () => {
+    const appendedLinks: Array<{
+      click: ReturnType<typeof vi.fn>;
+      download: string;
+      href: string;
+      remove: ReturnType<typeof vi.fn>;
+      style: Record<string, string>;
+    }> = [];
+    const objectUrl = "blob:biztrack-export";
+    const revokeObjectURL = vi.fn();
+    const createObjectURL = vi.fn(() => objectUrl);
+
+    vi.stubGlobal("URL", { createObjectURL, revokeObjectURL });
+    vi.stubGlobal("document", {
+      body: {
+        appendChild(link: (typeof appendedLinks)[number]) {
+          appendedLinks.push(link);
+          return link;
+        }
+      },
+      createElement(tagName: string) {
+        expect(tagName).toBe("a");
+        return {
+          click: vi.fn(),
+          download: "",
+          href: "",
+          remove: vi.fn(),
+          style: {}
+        };
+      }
+    });
+    vi.stubGlobal("window", {
+      setTimeout(callback: () => void) {
+        callback();
+        return 0;
+      }
+    });
+
+    core.downloadCSVFile("name\nBizTrack", "biztrack.csv");
+
+    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect(appendedLinks).toHaveLength(1);
+    expect(appendedLinks[0].download).toBe("biztrack.csv");
+    expect(appendedLinks[0].href).toBe(objectUrl);
+    expect(appendedLinks[0].click).toHaveBeenCalledOnce();
+    expect(appendedLinks[0].remove).toHaveBeenCalledOnce();
+    expect(revokeObjectURL).toHaveBeenCalledWith(objectUrl);
   });
 });

@@ -105,6 +105,7 @@ export interface BizTrackCore {
   nextTransactionId(transactions: Array<{ trID: unknown }>): number;
   escapeCsvValue(value: unknown): string;
   generateCSV(data: CsvRecord[]): string;
+  downloadCSVFile(csvContent: string, filename: string): void;
 }
 
 export interface LocalStorageRepositoryOptions<T extends DataRecord> {
