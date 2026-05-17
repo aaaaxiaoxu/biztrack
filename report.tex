@@ -4,9 +4,51 @@
 \usepackage{courier}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
 \usepackage{graphicx}
 \usepackage{hyperref}
 \renewcommand{\familydefault}{\sfdefault}
+\definecolor{accentblue}{RGB}{0,122,164}
+\definecolor{softblue}{RGB}{238,247,253}
+\captionsetup{
+  labelfont={bf,color=accentblue},
+  font=small
+}
+\newcommand{\evidenceimage}[3]{%
+  \begin{figure}[H]
+    \centering
+    \IfFileExists{#1}{%
+      \includegraphics[width=#2\linewidth]{#1}%
+    }{%
+      \fcolorbox{accentblue!45}{softblue}{%
+        \parbox{0.82\linewidth}{\centering\vspace{0.65em}Evidence image pending: \texttt{#1}\vspace{0.65em}}%
+      }%
+    }%
+    \caption{#3}
+  \end{figure}
+}
+\newcommand{\evidencepair}[5]{%
+  \begin{figure}[H]
+    \centering
+    \begin{subfigure}[t]{0.48\linewidth}
+      \centering
+      \IfFileExists{#1}{\includegraphics[width=\linewidth]{#1}}{%
+        \fcolorbox{accentblue!45}{softblue}{\parbox{0.92\linewidth}{\centering\vspace{0.5em}\texttt{#1}\vspace{0.5em}}}%
+      }
+      \caption{#2}
+    \end{subfigure}\hfill
+    \begin{subfigure}[t]{0.48\linewidth}
+      \centering
+      \IfFileExists{#3}{\includegraphics[width=\linewidth]{#3}}{%
+        \fcolorbox{accentblue!45}{softblue}{\parbox{0.92\linewidth}{\centering\vspace{0.5em}\texttt{#3}\vspace{0.5em}}}%
+      }
+      \caption{#4}
+    \end{subfigure}
+    \caption{#5}
+  \end{figure}
+}
 \lstset{
   basicstyle=\footnotesize\ttfamily,
   breaklines=true,
@@ -94,26 +136,32 @@ orderTotal = core.calculateOrderTotal(itemPrice, qtyBought, shipping, taxes);
 \end{lstlisting}
 
 \section{Baseline Standards Evidence}
-\begin{figure}[h]
-\centering\fbox{\parbox{0.82\linewidth}{Insert Cloudflare/Vercel uptime screenshot showing 7+ green days.}}
-\caption{Production deployment uptime evidence for BizTrack.}
-\end{figure}
-\begin{figure}[h]
-\centering\fbox{\parbox{0.82\linewidth}{Insert README badge or CI/Codecov screenshot. Local Istanbul output: statements 96.15\%, branches 87.17\%, functions 98.43\%, lines 98.60\%.}}
-\caption{Test coverage evidence from Vitest/Istanbul.}
-\end{figure}
-\begin{figure}[h]
-\centering\fbox{\parbox{0.82\linewidth}{Insert Lighthouse Accessibility screenshot showing 90+ after focus, labels, and semantic-control fixes.}}
-\caption{Lighthouse accessibility evidence.}
-\end{figure}
-\begin{figure}[h]
-\centering\fbox{\parbox{0.82\linewidth}{Insert screenshot of the EN/Chinese language toggle.}}
-\caption{Internationalization toggle evidence.}
-\end{figure}
-\begin{figure}[h]
-\centering\fbox{\parbox{0.82\linewidth}{Insert screenshot of cookie banner and Privacy Policy page.}}
-\caption{Cookie consent and privacy compliance evidence.}
-\end{figure}
+This section records the five mandatory baseline standards required by the brief. The evidence combines deployment logs, automated test output, Lighthouse audit results, bilingual interface screenshots, and privacy-compliance screenshots. Each item is shown with a numbered figure and a short caption so that the marker can verify the standard directly.
+
+\subsection{Live Uptime}
+BizTrack is deployed through Cloudflare Pages from the \texttt{main} branch. The deployment evidence shows a successful production build and publish process, including repository cloning, application build, asset upload, and deployment to Cloudflare's global network. This confirms that the submitted URL is a live production deployment rather than a local-only prototype.
+
+\evidenceimage{Figures/部署log.png}{0.92}{Production deployment evidence for BizTrack on Cloudflare Pages.}
+
+\subsection{Test Coverage}
+The project uses Vitest with V8/Istanbul coverage. The latest local run completed successfully with 4 test files and 15 tests passing. The reported coverage is 95.86\% statements, 87.17\% branches, 98.38\% functions, and 98.49\% lines, which exceeds the 80\% minimum baseline.
+
+\evidenceimage{Figures/coverage.png}{0.92}{Automated test coverage evidence from Vitest/Istanbul.}
+
+\subsection{Accessibility}
+The Lighthouse audit reports an Accessibility score of 100. This result reflects the refactoring work on keyboard-focus visibility, labelled controls, semantic buttons, table interaction, and navigation structure. Manual checks are still useful, but the automated score demonstrates that the implementation meets the coursework threshold of 90+.
+
+\evidenceimage{Figures/英文lighthouse.png}{0.82}{Lighthouse accessibility evidence showing a score of 100.}
+
+\subsection{Bilingual Function (i18n)}
+BizTrack includes a visible language selector in the header. Switching the selector updates the interface from English to Chinese, including navigation labels, page titles, dashboard headings, form text, and translated UI content. The language preference is persisted in browser storage, so the selected locale remains active across page reloads. Figures below show the same application area in English and Chinese, proving that the bilingual toggle is functional rather than a static screenshot.
+
+\evidencepair{Figures/英文.png}{English interface with the language selector set to EN.}{Figures/中文.png}{Chinese interface after switching the language selector.}{Internationalization evidence showing BizTrack in English and Chinese.}
+
+\subsection{Legal Compliance}
+The application provides a dedicated Privacy Policy page explaining that business records, language preference, and cookie-consent preference are stored locally in the browser. It also clarifies that the project does not use accounts, analytics trackers, advertising cookies, or server-side personal-data collection. Together with the cookie-consent banner, this satisfies the legal-compliance baseline for a responsible client-side application.
+
+\evidenceimage{Figures/隐私政策.png}{0.92}{Privacy Policy page evidence for legal-compliance baseline.}
 
 \section{Individual Contribution Forms}
 Attach the completed peer-assessment spreadsheet for all four members. Add direct pull-request links for each member here before submission.
