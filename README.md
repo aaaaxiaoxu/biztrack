@@ -51,6 +51,15 @@ This project uses Vite to compile TypeScript before deployment. Configure Cloudf
 
 Do not deploy the repository root directly after the TypeScript migration. The HTML source files reference TypeScript entry points for local Vite development, and browsers need the compiled JavaScript assets generated in `dist`. Locale files live under `public/locales` so Vite copies them to `dist/locales` for runtime translation loading.
 
+## 📦 Coursework Submission Files
+
+The repository includes the URL files required for the CPT304 submission package:
+
+- `github-url.txt`: repository URL for marker verification.
+- `live-url.txt`: production deployment URL for live app testing.
+
+Build and test evidence should be captured from `npm test`, `npm run build`, Cloudflare Pages deployment logs, and Lighthouse Accessibility reports before creating the final ZIP package.
+
 ## 💪🏾 Motivation
 
 Why this project? 😼 It all started with my eagerness to learn more about web development. This project marks the end of my first module in the Get Coding program, and boy, have I learned a lot!
