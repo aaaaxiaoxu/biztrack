@@ -11,6 +11,7 @@
     "serve": "vite --host 127.0.0.1"
   },
   "devDependencies": {
+    "@types/node": "^25.8.0",
     "@vitest/coverage-v8": "^4.1.5",
     "typescript": "^6.0.3",
     "vite": "^8.0.12",

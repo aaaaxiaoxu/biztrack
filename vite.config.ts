@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
+import { fileURLToPath } from "node:url";
 
-const htmlEntry = (file: string) => new URL(file, import.meta.url).pathname;
+const htmlEntry = (file: string) => fileURLToPath(new URL(file, import.meta.url));
 
 export default defineConfig({
   build: {
